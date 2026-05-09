@@ -1,14 +1,10 @@
 """
 MedVerify — API Layer
 FastAPI endpoint that accepts a credential image and returns a trust score.
-This is what the backend dev connects to Squad's payment gate.
-
 Requirements:
     pip install fastapi uvicorn python-multipart
-
 Run:
     uvicorn api:app --reload --port 8000
-
 Test:
     POST http://localhost:8000/verify  (with form-data: file=<image>)
 """
@@ -30,10 +26,10 @@ from cv_pipeline import build_model, predict_single, compute_trust_score, MODEL_
 from nlp_pipeline import load_registry, run_nlp_pipeline
 
 
-# ── Fraud Alert Config ────────────────────────────────────────────────────────
+#Fraud Alert Config 
 ALERT_THRESHOLD = 30                     # trust score below this triggers alert
-ALERT_EMAIL = "authorities@mdcn.gov.ng"   # mock — replace in production
-SENDER_EMAIL = "alerts@medverify.ng"      # mock — replace in production
+ALERT_EMAIL = "authorities@mdcn.gov.ng"   # mock — to be replaced in production
+SENDER_EMAIL = "alerts@medverify.ng"      # mock — to be replaced in production
 FRAUD_LOG_PATH = "data/fraud_alerts.json" # local log of all alerts triggered
 
 app = FastAPI(
@@ -42,7 +38,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Allow frontend + backend to call this freely during hackathon
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -50,7 +46,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Load model + registry once at startup ────────────────────────────────────
+# Load model + registry once at startup 
 print("[API] Loading registry...")
 REGISTRY = load_registry()
 
@@ -63,7 +59,7 @@ if os.path.exists(MODEL_SAVE_PATH):
 else:
     print("[API] WARNING: No trained model found. Using untrained weights (run cv_pipeline.py first).")
 
-# ── Fraud Alert Function ──────────────────────────────────────────────────────
+#Fraud Alert Function 
 def send_fraud_alert(trust_report: dict) -> bool:
     """
     Triggered when trust score is below ALERT_THRESHOLD (30).
@@ -77,7 +73,7 @@ def send_fraud_alert(trust_report: dict) -> bool:
     flags = ", ".join(trust_report["flags"]) or "None"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
  
-    # ── Log to local fraud_alerts.json ────────────────────────────────────────
+    # Log to local fraud_alerts.json 
     alert_entry = {
         "timestamp": timestamp,
         "practitioner_name": name,
@@ -97,7 +93,7 @@ def send_fraud_alert(trust_report: dict) -> bool:
     with open(FRAUD_LOG_PATH, "w") as f:
         json.dump(existing, f, indent=2)
  
-    # ── Console alert (visible in terminal during demo) ───────────────────────
+    #Console alert (visible in terminal during demo) 
     print(f"\n{'='*55}")
     print(f"FRAUD ALERT TRIGGERED — {timestamp}")
     print(f"   Practitioner : {name}")
@@ -133,8 +129,7 @@ def send_fraud_alert(trust_report: dict) -> bool:
     return True
  
  
-
-# ── Routes ────────────────────────────────────────────────────────────────────
+# Routes 
 @app.get("/")
 def root():
     return {"status": "MedVerify API running", "version": "1.0.0"}
@@ -173,7 +168,7 @@ async def verify_credential(file: UploadFile = File(...)):
     if file.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         raise HTTPException(status_code=400, detail="Only JPEG/PNG images are accepted.")
 
-    # Save to temp file (pipelines need a file path)
+    # Save to temp file
     contents = await file.read()
     with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
         tmp.write(contents)
@@ -182,14 +177,10 @@ async def verify_credential(file: UploadFile = File(...)):
     try:
         # Run CV pipeline
         cv_result = predict_single(MODEL, tmp_path)
-
-        # Run NLP pipeline
         nlp_result = run_nlp_pipeline(tmp_path, REGISTRY)
-
-        # Compute trust score
         trust_report = compute_trust_score(cv_result, nlp_result)
         
-         # ── Fraud Alert ───────────────────────────────────────────────────────
+         # Fraud Alert 
         alert_sent = False
         alert_message = None
         if trust_report["trust_score"] < ALERT_THRESHOLD:
@@ -222,8 +213,7 @@ async def verify_batch(files: list[UploadFile] = File(...)):
 @app.get("/fraud-alerts")
 def get_fraud_alerts():
     """
-    Returns all triggered fraud alerts.
-    Frontend uses this to populate the admin fraud report table.
+    Returns all triggered fraud alerts
     """
     if not os.path.exists(FRAUD_LOG_PATH):
         return {"alerts": [], "total": 0}

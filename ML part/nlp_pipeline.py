@@ -7,7 +7,7 @@ Requirements:
     pip install pytesseract spacy rapidfuzz opencv-python pillow
     python -m spacy download en_core_web_sm
 
-    Also install Tesseract binary:
+    Install Tesseract binary:
     - Windows: https://github.com/UB-Mannheim/tesseract/wiki
     - Linux:   sudo apt install tesseract-ocr
     - Mac:     brew install tesseract
@@ -22,20 +22,20 @@ import numpy as np
 from PIL import Image
 from rapidfuzz import fuzz, process
 
-# ── If on Windows, set tesseract path ────────────────────────────────────────
-# Uncomment and update this line if you're on Windows:
+
+
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 REGISTRY_PATH = "data/mock_registry.json"
 
 
-# ── 1. Load Registry ──────────────────────────────────────────────────────────
+# 1. Load Registry 
 def load_registry(path: str = REGISTRY_PATH) -> list:
     with open(path) as f:
         return json.load(f)
 
 
-# ── 2. Image Preprocessing ───────────────────────────────────────────────────
+# 2. Image Preprocessing
 def preprocess_image(image_path: str) -> np.ndarray:
     """
     Cleans the image before OCR:
@@ -65,7 +65,7 @@ def preprocess_image(image_path: str) -> np.ndarray:
     return sharpened
 
 
-# ── 3. OCR ────────────────────────────────────────────────────────────────────
+# 3. OCR 
 def run_ocr(preprocessed_img: np.ndarray) -> str:
     """Runs Tesseract OCR and returns raw extracted text."""
     pil_img = Image.fromarray(preprocessed_img)
@@ -74,7 +74,7 @@ def run_ocr(preprocessed_img: np.ndarray) -> str:
     return text
 
 
-# ── 4. Field Extraction ───────────────────────────────────────────────────────
+#  4. Field Extraction
 def extract_fields(ocr_text: str) -> dict:
     """
     Uses regex patterns to extract structured fields from raw OCR text.
@@ -132,7 +132,7 @@ def extract_fields(ocr_text: str) -> dict:
     return fields
 
 
-# ── 5. Registry Cross-Reference ───────────────────────────────────────────────
+# 5. Registry Cross-Reference
 def cross_reference(extracted: dict, registry: list) -> dict:
     """
     Compares extracted fields against the mock registry.
@@ -196,7 +196,7 @@ def cross_reference(extracted: dict, registry: list) -> dict:
     return result
 
 
-# ── 6. Full Pipeline ──────────────────────────────────────────────────────────
+# 6. Full Pipeline
 def run_nlp_pipeline(image_path: str, registry: list) -> dict:
     """
     End-to-end NLP pipeline for one credential image.

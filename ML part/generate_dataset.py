@@ -1,5 +1,5 @@
 """
-MedVerify — Day 1: Synthetic Credential Image Generator
+MedVerify: Synthetic Credential Image Generator
 Generates fake MDCN-style credential documents (clean + tampered) for training.
 
 Requirements:
@@ -15,7 +15,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 import io
 
-# ── Config ────────────────────────────────────────────────────────────────────
+#Config 
 OUTPUT_DIR = "data/raw"
 CLEAN_DIR = os.path.join(OUTPUT_DIR, "clean")
 TAMPERED_DIR = os.path.join(OUTPUT_DIR, "tampered")
@@ -26,7 +26,7 @@ REGISTRY_PATH = "data/mock_registry.json"
 os.makedirs(CLEAN_DIR, exist_ok=True)
 os.makedirs(TAMPERED_DIR, exist_ok=True)
 
-# ── Load registry for realistic names/numbers ─────────────────────────────────
+# Load registry for realistic names/numbers 
 def load_registry():
     if not os.path.exists(REGISTRY_PATH):
         print(f"[WARN] Registry not found at {REGISTRY_PATH}. Run generate_registry.py first.")
@@ -38,7 +38,7 @@ def load_registry():
     with open(REGISTRY_PATH) as f:
         return json.load(f)
 
-# ── Draw a clean credential image ────────────────────────────────────────────
+# Draw a clean credential image 
 def draw_credential(record: dict) -> Image.Image:
     """Creates a realistic-looking MDCN credential as a PIL Image."""
     width, height = 1200, 850  # A5 landscape roughly
@@ -99,7 +99,7 @@ def draw_credential(record: dict) -> Image.Image:
     return img
 
 
-# ── Tampering functions ───────────────────────────────────────────────────────
+# Tampering functions 
 def tamper_text_smudge(img: Image.Image) -> Image.Image:
     """Blurs a small region to simulate erased/re-typed text."""
     img = img.copy()
@@ -154,7 +154,7 @@ def apply_tampering(img: Image.Image) -> Image.Image:
     return img
 
 
-# ── Main generation loop ──────────────────────────────────────────────────────
+# Main generation loop 
 def main():
     registry = load_registry()
     manifest = []  # tracks all generated samples with labels

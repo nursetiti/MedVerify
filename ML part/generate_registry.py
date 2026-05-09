@@ -14,13 +14,13 @@ from faker import Faker
 fake = Faker("en_NG")  # Nigerian locale
 random.seed(42)
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# Config
 OUTPUT_PATH = "data/mock_registry.json"
 NUM_RECORDS = 200
 
 os.makedirs("data", exist_ok=True)
 
-# ── Nigerian name pools (realistic) ──────────────────────────────────────────
+#Nigerian name pools
 FIRST_NAMES = [
     "Aminu", "Chioma", "Emeka", "Fatima", "Gbenga", "Hauwa", "Ibrahim",
     "Jumoke", "Kelechi", "Lawal", "Miriam", "Ngozi", "Oluwaseun", "Precious",
@@ -73,7 +73,7 @@ INSTITUTIONS = [
     "Lagos University Teaching Hospital",
 ]
 
-# ── Generate records ──────────────────────────────────────────────────────────
+#Generate records
 def generate_reg_number(year: int, seq: int) -> str:
     return f"MDCN/{year}/{seq:05d}"
 

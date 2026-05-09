@@ -1,5 +1,5 @@
 """
-MedVerify — 2: CV Pipeline + Trust Scoring Engine
+MedVerify: CV Pipeline + Trust Scoring Engine
 Uses a pretrained EfficientNet to classify credentials as clean or tampered,
 then combines CV + NLP signals into a final Trust Score (0-100).
 
@@ -18,12 +18,12 @@ from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 import timm
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# Config
 MANIFEST_PATH = "data/raw/manifest.json"
 DATA_DIR = "data/raw"
 MODEL_SAVE_PATH = "models/cv_model.pth"
 BATCH_SIZE = 16
-EPOCHS = 5          # enough for a hackathon demo
+EPOCHS = 5          # should be sufficient for hackathon demo
 LEARNING_RATE = 1e-4
 IMG_SIZE = 224
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -32,7 +32,7 @@ os.makedirs("models", exist_ok=True)
 print(f"[INFO] Using device: {DEVICE}")
 
 
-# ── 1. Dataset ────────────────────────────────────────────────────────────────
+# 1. Dataset 
 class CredentialDataset(Dataset):
     def __init__(self, manifest_path: str, data_dir: str, transform=None):
         with open(manifest_path) as f:
@@ -53,7 +53,7 @@ class CredentialDataset(Dataset):
         return image, label
 
 
-# ── 2. Transforms ─────────────────────────────────────────────────────────────
+# 2. Transforms
 train_transform = transforms.Compose([
     transforms.Resize((IMG_SIZE, IMG_SIZE)),
     transforms.RandomHorizontalFlip(),
@@ -72,7 +72,7 @@ eval_transform = transforms.Compose([
 ])
 
 
-# ── 3. Model ──────────────────────────────────────────────────────────────────
+# 3. Model
 def build_model() -> nn.Module:
     """
     EfficientNetB0 pretrained on ImageNet, fine-tuned for binary classification.
@@ -82,7 +82,7 @@ def build_model() -> nn.Module:
     return model.to(DEVICE)
 
 
-# ── 4. Training ───────────────────────────────────────────────────────────────
+# 4. Training 
 def train_model(model, dataloader, epochs=EPOCHS):
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -113,7 +113,7 @@ def train_model(model, dataloader, epochs=EPOCHS):
     return model
 
 
-# ── 5. Inference ──────────────────────────────────────────────────────────────
+# 5. Inference 
 def predict_single(model, image_path: str) -> dict:
     """
     Runs CV inference on one credential image.
@@ -136,7 +136,7 @@ def predict_single(model, image_path: str) -> dict:
     }
 
 
-# ── 6. Trust Scoring Engine ───────────────────────────────────────────────────
+# 6. Trust Scoring Engine 
 def compute_trust_score(cv_result: dict, nlp_result: dict) -> dict:
     """
     Combines CV + NLP signals into a single Trust Score (0–100).
@@ -216,7 +216,7 @@ def compute_trust_score(cv_result: dict, nlp_result: dict) -> dict:
     }
 
 
-# ── 7. Full Verification Pipeline (CV + NLP → Trust Score) ───────────────────
+# 7. Full Verification Pipeline (CV + NLP → Trust Score)
 def verify_credential(image_path: str, model, registry: list) -> dict:
     """
     The single function the FastAPI endpoint will call.
@@ -236,7 +236,7 @@ def verify_credential(image_path: str, model, registry: list) -> dict:
     }
 
 
-# ── 8. Main — Train + Demo ────────────────────────────────────────────────────
+# 8. Main — Train + Demo 
 if __name__ == "__main__":
     # Check manifest exists
     if not os.path.exists(MANIFEST_PATH):
