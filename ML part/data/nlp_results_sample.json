@@ -1,0 +1,352 @@
+[
+  {
+    "image_path": "data/raw/clean\\clean_0000.png",
+    "extracted_fields": {
+      "name": "Dr. Henry Yakubu",
+      "reg_number": "MDCN/2009/00098",
+      "specialty": "General Practice",
+      "reg_date": "02-APR-2010",
+      "status": "revoked",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 98,
+        "name": "Dr. Henry Yakubu",
+        "first_name": "Henry",
+        "last_name": "Yakubu",
+        "reg_number": "MDCN/2009/00098",
+        "specialty": "General Practice",
+        "reg_date": "02-APR-2010",
+        "expiry_date": "01-APR-2013",
+        "status": "revoked",
+        "state": "Rivers",
+        "institution": "University of Nigeria Nsukka",
+        "phone": "08044295247",
+        "email": "henry.yakubu38@medverify.ng"
+      },
+      "registry_status": "revoked",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "Cerrcreoneoseron]\nREGISTRANT NAME: Dr. Henry Yakubu\nREGISTRATION NO: MDCN/2009/00098\nSPECIALTY: General Practice\nDATE OF REGISTRATION: 02-APR-2010\nSTATUS: REVOKED\nISSUING AUTHORITY: Registrar, MDCN\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/clean\\clean_0001.png",
+    "extracted_fields": {
+      "name": "Prof. Babatunde Nwosu",
+      "reg_number": "MDCN/2021/00071",
+      "specialty": "Cardiology",
+      "reg_date": "28-SEP-2022",
+      "status": "revoked",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 71,
+        "name": "Prof. Babatunde Nwosu",
+        "first_name": "Babatunde",
+        "last_name": "Nwosu",
+        "reg_number": "MDCN/2021/00071",
+        "specialty": "Cardiology",
+        "reg_date": "28-SEP-2022",
+        "expiry_date": "23-AUG-2023",
+        "status": "revoked",
+        "state": "Borno",
+        "institution": "Ahmadu Bello University",
+        "phone": "08041510328",
+        "email": "babatunde.nwosu81@medverify.ng"
+      },
+      "registry_status": "revoked",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "BEEDERAL REPUELICOE NIGERIA)\nREGISTRANT NAME: Prof. Babatunde Nwosu\nREGISTRATION NO: MDCN/2021/00071\nSPECIALTY: Cardiology\nDATE OF REGISTRATION: 28-SEP-2022\nSTATUS: REVOKED\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/clean\\clean_0002.png",
+    "extracted_fields": {
+      "name": "Dr. Chibundo Adeyemi",
+      "reg_number": "MDCN/2010/00132",
+      "specialty": "Ophthalmology",
+      "reg_date": "41-FEB-2011",
+      "status": "active",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 132,
+        "name": "Dr. Chibundo Adeyemi",
+        "first_name": "Chibundo",
+        "last_name": "Adeyemi",
+        "reg_number": "MDCN/2010/00132",
+        "specialty": "Ophthalmology",
+        "reg_date": "21-FEB-2011",
+        "expiry_date": "12-MAR-2013",
+        "status": "active",
+        "state": "Plateau",
+        "institution": "University of Nigeria Nsukka",
+        "phone": "08068065043",
+        "email": "chibundo.adeyemi65@medverify.ng"
+      },
+      "registry_status": "active",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "BScDERAL ECUELICOS NIGERIA]\nREGISTRANT NAME: Dr. Chibundo Adeyemi\nREGISTRATION NO: MDCN/2010/00132\nSPECIALTY: Ophthalmology\nDATE OF REGISTRATION: 241-FEB-2011\nSTATUS: ACTIVE\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/clean\\clean_0003.png",
+    "extracted_fields": {
+      "name": "Dr. Grace Danjuma",
+      "reg_number": "MDCN/2019/00172",
+      "specialty": "Ophthalmology",
+      "reg_date": "23-APR-2020",
+      "status": "inactive",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 172,
+        "name": "Dr. Grace Danjuma",
+        "first_name": "Grace",
+        "last_name": "Danjuma",
+        "reg_number": "MDCN/2019/00172",
+        "specialty": "Ophthalmology",
+        "reg_date": "23-APR-2020",
+        "expiry_date": "11-MAY-2024",
+        "status": "inactive",
+        "state": "Enugu",
+        "institution": "Jos University Teaching Hospital",
+        "phone": "08097069904",
+        "email": "grace.danjuma46@medverify.ng"
+      },
+      "registry_status": "inactive",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "BEEDERAL REEUSLICOS NIGERIA]\nREGISTRANT NAME: Dr. Grace Danjuma\nREGISTRATION NO: MDCN/2019/00172\nSPECIALTY: Ophthalmology\nDATE OF REGISTRATION: 23-APR-2020\nSTATUS: INACTIVE\nISSUING AUTHORITY: Registrar, MDCN\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/clean\\clean_0004.png",
+    "extracted_fields": {
+      "name": "Prof. Zainab Mohammed",
+      "reg_number": "MDCN/2018/00127",
+      "specialty": "Psychiatry",
+      "reg_date": "02-OCT-2018",
+      "status": "active",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 127,
+        "name": "Prof. Zainab Mohammed",
+        "first_name": "Zainab",
+        "last_name": "Mohammed",
+        "reg_number": "MDCN/2018/00127",
+        "specialty": "Psychiatry",
+        "reg_date": "02-OCT-2018",
+        "expiry_date": "12-AUG-2020",
+        "status": "active",
+        "state": "Borno",
+        "institution": "University of Nigeria Nsukka",
+        "phone": "08081062902",
+        "email": "zainab.mohammed47@medverify.ng"
+      },
+      "registry_status": "active",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "MAID\n[emrcnreonres SEATON]\n\nREGISTRANT NAME: Prof. Zainab Mohammed\n\nREGISTRATION NO: MDCN/2018/00127\n\nSPECIALTY: Psychiatry\n\nDATE OF REGISTRATION: 02-OCT-2018\n\nSTATUS: ACTIVE.\n\nISSUING AUTHORITY: Registrar, MDCN\n\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/tampered\\tampered_0000.png",
+    "extracted_fields": {
+      "name": "Dr. Precious James:",
+      "reg_number": "MDCN/2015/00147",
+      "specialty": "Anaesthesia",
+      "reg_date": "17-JUL-2016",
+      "status": "revoked",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 0.972972972972973,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 147,
+        "name": "Dr. Precious James",
+        "first_name": "Precious",
+        "last_name": "James",
+        "reg_number": "MDCN/2015/00147",
+        "specialty": "Anaesthesia",
+        "reg_date": "17-JUL-2016",
+        "expiry_date": "18-JUN-2019",
+        "status": "revoked",
+        "state": "Imo",
+        "institution": "University of Ibadan",
+        "phone": "08091883092",
+        "email": "precious.james62@medverify.ng"
+      },
+      "registry_status": "revoked",
+      "overall_match_score": 0.9905
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "[EDERAL REEUBLIC OF NIGERIA)\nREGISTRANT NAME: Dr. Precious James:\nREGISTRATION NO: MDCN/2015/00147\nSPECIALTY: Anaesthesia\nDATE OF REGISTRATION: 17-JUL-2016 _\nSTATUS: REVOKED\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/tampered\\tampered_0001.png",
+    "extracted_fields": {
+      "name": "Dr. Xola Musa",
+      "reg_number": "MDCN/2016/00102",
+      "specialty": "Psychiatry",
+      "reg_date": "21-FEB-2016",
+      "status": null,
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 102,
+        "name": "Dr. Xola Musa",
+        "first_name": "Xola",
+        "last_name": "Musa",
+        "reg_number": "MDCN/2016/00102",
+        "specialty": "Psychiatry",
+        "reg_date": "21-FEB-2016",
+        "expiry_date": "12-DEC-2019",
+        "status": "inactive",
+        "state": "Rivers",
+        "institution": "Ahmadu Bello University",
+        "phone": "08029655410",
+        "email": "xola.musa33@medverify.ng"
+      },
+      "registry_status": "inactive",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 0.8333,
+    "raw_ocr_snippet": "Bi EDERNL Reps. ICOF NIGERIA]\nREGISTRANT NAME: Dr. Xola Musa\nREGISTRATION NO: MDCN/2016/00102\nSPECIALTY: Psychiatry\nDATE OF REGISTRATION: 21-FEB-2016 _\nSTATUS: Nace\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/tampered\\tampered_0002.png",
+    "extracted_fields": {
+      "name": "Prof. Victoria Kwara",
+      "reg_number": "MDCN/2000/00095",
+      "specialty": "Neurology",
+      "reg_date": "06-MAR-2001",
+      "status": "active",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 95,
+        "name": "Prof. Victoria Kwara",
+        "first_name": "Victoria",
+        "last_name": "Kwara",
+        "reg_number": "MDCN/2000/00095",
+        "specialty": "Neurology",
+        "reg_date": "06-MAR-2001",
+        "expiry_date": "21-JAN-2002",
+        "status": "active",
+        "state": "Ogun",
+        "institution": "Jos University Teaching Hospital",
+        "phone": "08038874646",
+        "email": "victoria.kwara49@medverify.ng"
+      },
+      "registry_status": "active",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "BSEDERAL REDUBLICOE NIGERIA)\nREGISTRANT NAME: Prof. Victoria Kwara\nREGISTRATION NO: MDCN/2000/00095\nSPECIALTY: Neurology\nDATE OF REGISTRATION: 06-MAR-2001\nSTATUS: ACTIVE\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/tampered\\tampered_0003.png",
+    "extracted_fields": {
+      "name": "Dr. Emeka Lawan",
+      "reg_number": "MDCN/2010/00121",
+      "specialty": "Cardiology",
+      "reg_date": "27-NOV-2010",
+      "status": "active",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 1.0,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 121,
+        "name": "Dr. Emeka Lawan",
+        "first_name": "Emeka",
+        "last_name": "Lawan",
+        "reg_number": "MDCN/2010/00121",
+        "specialty": "Cardiology",
+        "reg_date": "27-NOV-2010",
+        "expiry_date": "15-DEC-2015",
+        "status": "active",
+        "state": "Imo",
+        "institution": "University of Nigeria Nsukka",
+        "phone": "08028099607",
+        "email": "emeka.lawan9@medverify.ng"
+      },
+      "registry_status": "active",
+      "overall_match_score": 1.0
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "[EDERAL REBUBLICOE NIGERIA]\nREGISTRANT NAME: Dr. Emeka Lawan\nREGISTRATION NO: MDCN/2010/00121\nSPECIALTY: Cardiology\nDATE OF REGISTRATION: 27-NOV-2010\nSTATUS: ACTIVE\nISSUING AUTHORITY: Registrar, MDCN\nRegistrar's Signature\n"
+  },
+  {
+    "image_path": "data/raw/tampered\\tampered_0004.png",
+    "extracted_fields": {
+      "name": "Dr. Feoma Yakubu",
+      "reg_number": "MDCN/2018/00196",
+      "specialty": "Radiology",
+      "reg_date": "23-OCT-2018",
+      "status": "active",
+      "issuing_authority": "MDCN"
+    },
+    "registry_match": {
+      "reg_number_match": 1.0,
+      "name_match": 0.9696969696969697,
+      "specialty_match": 1.0,
+      "matched_record": {
+        "id": 196,
+        "name": "Dr. Ifeoma Yakubu",
+        "first_name": "Ifeoma",
+        "last_name": "Yakubu",
+        "reg_number": "MDCN/2018/00196",
+        "specialty": "Radiology",
+        "reg_date": "23-OCT-2018",
+        "expiry_date": "15-NOV-2021",
+        "status": "active",
+        "state": "Kaduna",
+        "institution": "University of Lagos",
+        "phone": "08074796438",
+        "email": "ifeoma.yakubu14@medverify.ng"
+      },
+      "registry_status": "active",
+      "overall_match_score": 0.9894
+    },
+    "ocr_completeness": 1.0,
+    "raw_ocr_snippet": "BEEDERAL REEUBLICOS NIGERIA]\nREGISTRANT NAME: Dr. feoma Yakubu\nREGISTRATION NO: MDCN/2018/00196 _\nSPECIALTY: Radiology\nDATE OF REGISTRATION: 23-OCT-2018\nSTATUS: ACTIVE\nISSUING AUTHORITY: Registrar, MDCN.\nRegistrar's Signature\n"
+  }
+]
