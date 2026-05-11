@@ -1,0 +1,11 @@
+.layout {
+  min-height: 100vh;
+  background: #F7F6F2;
+  font-family: 'Sora', sans-serif;
+}
+
+.layout-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 28px 24px;
+}
