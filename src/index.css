@@ -1,8 +1,0 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Sora', sans-serif;
-  background: #f7f6f2;
-  color: #1a1a18;
-  -webkit-font-smoothing: antialiased;
-}
