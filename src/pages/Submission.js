@@ -51,7 +51,9 @@ export default function Submission() {
   sessionStorage.setItem('medverify_form', JSON.stringify(form));
 
   // Navigate with the file in state (file objects can't go in sessionStorage)
+  sessionStorage.setItem('verification_session_id', `VERIFY-${Date.now()}`);
   sessionStorage.removeItem('dashboard_result');
+  sessionStorage.removeItem('payment_result');
   navigate('/dashboard', {
     state: {
       form,

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import './Admin.css';
 
 const MOCK_CASES = [
@@ -69,23 +68,57 @@ const getFlagDesc = (flag) => {
   return descs[flag] || 'Anomaly detected during verification.';
 };
 
+const CASE_STATUS_OVERRIDES_KEY = 'admin_case_statuses';
+const FLAGGED_PENDING_COUNT_KEY = 'flagged_pending_count';
+const AUTO_VERIFIED_COUNT_KEY = 'auto_verified_count';
+
+const publishFlaggedPendingCount = (nextCases) => {
+  const pendingCount = nextCases.filter(c => c.status === 'pending').length;
+  sessionStorage.setItem(FLAGGED_PENDING_COUNT_KEY, String(pendingCount));
+  window.dispatchEvent(new CustomEvent('flaggedCasesUpdated', {
+    detail: { pendingCount },
+  }));
+};
+
 export default function Admin() {
-  const navigate = useNavigate();
   const [cases, setCases] = useState([]);
+  const [autoVerifiedCount, setAutoVerifiedCount] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
     const saved = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
-    setCases([...saved, ...MOCK_CASES]);
+    const statusOverrides = JSON.parse(sessionStorage.getItem(CASE_STATUS_OVERRIDES_KEY) || '{}');
+    const mockCases = MOCK_CASES.map(c => ({
+      ...c,
+      status: statusOverrides[c.id] || c.status,
+    }));
+    const loadedCases = [...saved, ...mockCases];
+
+    setCases(loadedCases);
+    setAutoVerifiedCount(Number(sessionStorage.getItem(AUTO_VERIFIED_COUNT_KEY) || '0'));
+    publishFlaggedPendingCount(loadedCases);
   }, []);
 
-  const stats = {
-    total: 1247,
+  // const stats = {
+  //   total: 1247,
+  //   cleared: 1189,
+  //   blocked: 55,
+  //   pending: cases.filter(c => c.status === 'pending').length,
+  // };
+
+  const BASE_STATS = {
     cleared: 1189,
     blocked: 55,
+  };
+
+  const stats = {
+    cleared: BASE_STATS.cleared + autoVerifiedCount + cases.filter(c => c.status === 'cleared').length,
+    blocked: BASE_STATS.blocked + cases.filter(c => c.status === 'blocked').length,
     pending: cases.filter(c => c.status === 'pending').length,
   };
+
+  stats.total = stats.cleared + stats.blocked + stats.pending;
 
   const getScoreColor = (score) => {
     if (score >= 70) return '#1D9E75';
@@ -101,7 +134,14 @@ export default function Admin() {
 
     // Update sessionStorage too
     const saved = updated.filter(c => !MOCK_CASES.find(m => m.id === c.id));
+    const statusOverrides = JSON.parse(sessionStorage.getItem(CASE_STATUS_OVERRIDES_KEY) || '{}');
+    if (MOCK_CASES.find(m => m.id === caseId)) {
+      statusOverrides[caseId] = action;
+    }
+
     sessionStorage.setItem('flagged_cases', JSON.stringify(saved));
+    sessionStorage.setItem(CASE_STATUS_OVERRIDES_KEY, JSON.stringify(statusOverrides));
+    publishFlaggedPendingCount(updated);
     setSelectedCase(null);
   };
 
@@ -127,17 +167,17 @@ export default function Admin() {
       <div className="stats-row">
         <div className="stat-card">
           <div className="stat-label">Total Verified</div>
-          <div className="stat-val" style={{ color: '#06305A' }}>1,247</div>
+          <div className="stat-val" style={{ color: '#06305A' }}>{stats.total.toLocaleString()}</div>
           <div className="stat-sub">↑ 12 today</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Cleared</div>
-          <div className="stat-val" style={{ color: '#1D9E75' }}>1,189</div>
+          <div className="stat-val" style={{ color: '#1D9E75' }}>{stats.cleared.toLocaleString()}</div>
           <div className="stat-sub">95.3% rate</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Blocked</div>
-          <div className="stat-val" style={{ color: '#C94040' }}>55</div>
+          <div className="stat-val" style={{ color: '#C94040' }}>{stats.blocked.toLocaleString()}</div>
           <div className="stat-sub">4.4% fraud rate</div>
         </div>
         <div className="stat-card">

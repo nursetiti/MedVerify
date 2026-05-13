@@ -126,3 +126,9 @@
   border-color: rgba(201, 64, 64, 0.25);
   color: #C94040;
 }
+
+.navbar-user {
+  font-size: 13px;
+  color: #5F5E5A;
+  font-weight: 500;
+}

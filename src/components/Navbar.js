@@ -3,21 +3,43 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
+const FLAGGED_PENDING_COUNT_KEY = 'flagged_pending_count';
+
+const getFlaggedCount = () => {
+  const savedCount = sessionStorage.getItem(FLAGGED_PENDING_COUNT_KEY);
+  if (savedCount !== null) {
+    return Number(savedCount);
+  }
+
+  const saved = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
+  const pending = saved.filter(c => c.status === 'pending').length;
+  return pending + 3;
+};
+
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
-  const [flaggedCount, setFlaggedCount] = useState(3);
+  const [flaggedCount, setFlaggedCount] = useState(getFlaggedCount);
 
   useEffect(() => {
-    const saved = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
-    const pending = saved.filter(c => c.status === 'pending').length;
-    setFlaggedCount(pending + 3);
+    const handleFlaggedCasesUpdated = (event) => {
+      const pendingCount = event.detail?.pendingCount;
+      setFlaggedCount(Number.isFinite(pendingCount) ? pendingCount : getFlaggedCount());
+    };
+
+    setFlaggedCount(getFlaggedCount());
+    window.addEventListener('flaggedCasesUpdated', handleFlaggedCasesUpdated);
+
+    return () => {
+      window.removeEventListener('flaggedCasesUpdated', handleFlaggedCasesUpdated);
+    };
   }, [location]);
 
   const links = [
     { path: '/submit', label: 'Credential Submission', icon: 'ti-file-upload' },
     { path: '/dashboard', label: 'Trust Score', icon: 'ti-shield-check' },
+    { path: '/payment', label: 'Payment', icon: 'ti-credit-card' },
     { path: '/admin', label: 'Admin Review', icon: 'ti-flag', badge: flaggedCount },
   ];
 
@@ -42,7 +64,7 @@ export default function Navbar() {
           >
             <i className={`ti ${link.icon}`} />
             {link.label}
-            {link.badge && (
+            {link.badge > 0 && (
               <span className="navbar-badge">{link.badge}</span>
             )}
           </button>

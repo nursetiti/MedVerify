@@ -75,7 +75,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Scanning credential document...');
   const [result, setResult] = useState(null);
-  const [apiAvailable, setApiAvailable] = useState(true);
 
   const loadingSteps = [
     'Scanning credential document...',
@@ -179,13 +178,11 @@ export default function Dashboard() {
       clearInterval(stepInterval);
       setResult(response.data);
       sessionStorage.setItem('dashboard_result', JSON.stringify(response.data));
-      setApiAvailable(true);
       saveFlaggedCase(response.data, form);
 
     } catch (err) {
       clearInterval(stepInterval);
       console.error('API error:', err.message);
-      setApiAvailable(false);
 
       const mockResult = generateMockResult(form);
       setResult(mockResult);
@@ -240,15 +237,6 @@ export default function Dashboard() {
           <span className={`step ${result ? 'done' : ''}`}>3 Payment</span>
         </div>
       </div>
-
-      {/* API WARNING BANNER */}
-      {!apiAvailable && result && (
-        <div className="warn-banner">
-          <i className="ti ti-alert-circle" />
-          ML API not reachable — showing demo result. Run{' '}
-          <strong>python -m uvicorn api:app --reload --port 8000</strong> to use the real model.
-        </div>
-      )}
 
       {/* NO FORM DATA */}
       {!form && !loading && (
