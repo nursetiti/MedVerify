@@ -1,6 +1,23 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './Landing.css';
+
+// Simulated user database in sessionStorage
+const getRegisteredUsers = () => {
+  return JSON.parse(localStorage.getItem('medverify_users') || '[]');
+};
+
+const saveUser = (userData) => {
+  const users = getRegisteredUsers();
+  users.push(userData);
+  localStorage.setItem('medverify_users', JSON.stringify(users));
+};
+
+const findUser = (email) => {
+  const users = getRegisteredUsers();
+  return users.find(u => u.email.toLowerCase() === email.toLowerCase());
+};
 
 export default function Landing() {
   const [tab, setTab] = useState('login');
@@ -13,6 +30,7 @@ export default function Landing() {
   });
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLoginChange = (e) => {
     setLoginForm({ ...loginForm, [e.target.name]: e.target.value });
@@ -27,13 +45,38 @@ export default function Landing() {
   const handleLogin = (e) => {
     e.preventDefault();
     setError('');
+
     if (!loginForm.email || !loginForm.password) {
       setError('Please fill in all fields.');
       return;
     }
+    if (!loginForm.email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+
+      const existingUser = findUser(loginForm.email);
+
+      if (!existingUser) {
+        setError('No account found with this email. Please sign up first.');
+        return;
+      }
+
+      if (existingUser.password !== loginForm.password) {
+        setError('Incorrect password. Please try again.');
+        return;
+      }
+
+      login({
+        name: existingUser.name,
+        email: existingUser.email,
+        accountType: existingUser.accountType,
+        initials: existingUser.initials,
+      });
       navigate('/submit');
     }, 1200);
   };
@@ -41,18 +84,48 @@ export default function Landing() {
   const handleSignup = (e) => {
     e.preventDefault();
     setError('');
+
     const { firstName, lastName, email, accountType, password } = signupForm;
+
     if (!firstName || !lastName || !email || !accountType || !password) {
       setError('Please fill in all fields.');
+      return;
+    }
+    if (!email.includes('@')) {
+      setError('Please enter a valid email address.');
       return;
     }
     if (password.length < 8) {
       setError('Password must be at least 8 characters.');
       return;
     }
+
+    // Check if email already registered
+    const existing = findUser(email);
+    if (existing) {
+      setError('An account with this email already exists. Please sign in.');
+      return;
+    }
+
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
+
+      const userData = {
+        name: `${firstName} ${lastName}`,
+        email,
+        accountType,
+        password, // in production this would be hashed on the backend
+        initials: `${firstName[0]}${lastName[0]}`.toUpperCase(),
+      };
+
+      saveUser(userData);
+      login({
+        name: userData.name,
+        email: userData.email,
+        accountType: userData.accountType,
+        initials: userData.initials,
+      });
       navigate('/submit');
     }, 1200);
   };
@@ -61,7 +134,7 @@ export default function Landing() {
     <div className="auth-page">
       <div className="auth-wrap">
 
-        {/* LEFT PANEL — unchanged */}
+        {/* LEFT PANEL */}
         <div className="auth-left">
           <svg className="med-illustration" viewBox="0 0 340 580" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
             <rect width="340" height="580" fill="#06305A"/>
@@ -111,7 +184,8 @@ export default function Landing() {
             </div>
             <h1 className="auth-hero-title">Credential trust,<br />before every payment.</h1>
             <p className="auth-hero-sub">
-              AI-powered verification that protects telemedicine platforms from fraudulent practitioners — in real time.
+              AI-powered verification that protects telemedicine platforms
+              from fraudulent practitioners — in real time.
             </p>
             <div className="auth-stats">
               <div>
@@ -157,7 +231,9 @@ export default function Landing() {
           {tab === 'login' ? (
             <form className="form-section" onSubmit={handleLogin}>
               <h2 className="auth-form-title">Welcome back</h2>
-              <p className="auth-form-sub">Sign in to access your verification dashboard</p>
+              <p className="auth-form-sub">
+                Sign in to access your verification dashboard
+              </p>
 
               <div className="form-field">
                 <label>Email address</label>
@@ -205,20 +281,36 @@ export default function Landing() {
 
               <div className="auth-divider">or continue with</div>
 
-              <button type="button" className="btn-squad" onClick={() => navigate('/submit')}>
+              <button
+                type="button"
+                className="btn-squad"
+                onClick={() => {
+                  login({
+                    name: 'Squad User',
+                    email: 'user@squad.ng',
+                    accountType: 'Telemedicine Platform',
+                    initials: 'SU',
+                  });
+                  navigate('/submit');
+                }}
+              >
                 <div className="squad-dot">S</div>
                 Continue with Squad
               </button>
 
               <p className="auth-footer">
                 Don't have an account?{' '}
-                <span onClick={() => { setTab('signup'); setError(''); }}>Create one</span>
+                <span onClick={() => { setTab('signup'); setError(''); }}>
+                  Create one
+                </span>
               </p>
             </form>
           ) : (
             <form className="form-section" onSubmit={handleSignup}>
               <h2 className="auth-form-title">Join MedVerify</h2>
-              <p className="auth-form-sub">Set up your platform or practitioner account</p>
+              <p className="auth-form-sub">
+                Set up your platform or practitioner account
+              </p>
 
               <div className="field-row">
                 <div className="form-field">
@@ -302,7 +394,9 @@ export default function Landing() {
 
               <p className="auth-footer">
                 Already have an account?{' '}
-                <span onClick={() => { setTab('login'); setError(''); }}>Sign in</span>
+                <span onClick={() => { setTab('login'); setError(''); }}>
+                  Sign in
+                </span>
               </p>
             </form>
           )}

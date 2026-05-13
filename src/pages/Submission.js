@@ -31,25 +31,34 @@ export default function Submission() {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    const { fullName, regNumber, specialty, years, affiliation } = form;
+  e.preventDefault();
+  const { fullName, regNumber, specialty, years, affiliation } = form;
 
-    if (!fullName || !regNumber || !specialty || !years || !affiliation) {
-      alert('Please fill in all fields.');
-      return;
-    }
-    if (!files.mdcn) {
-      alert('Please upload your MDCN certificate.');
-      return;
-    }
-    if (!files.id) {
-      alert('Please upload your government-issued ID.');
-      return;
-    }
+  if (!fullName || !regNumber || !specialty || !years || !affiliation) {
+    alert('Please fill in all fields.');
+    return;
+  }
+  if (!files.mdcn) {
+    alert('Please upload your MDCN certificate.');
+    return;
+  }
+  if (!files.id) {
+    alert('Please upload your government-issued ID.');
+    return;
+  }
 
-    // Pass form data to dashboard via navigation state
-    navigate('/dashboard', { state: { form, files: { mdcn: files.mdcn?.name, id: files.id?.name } } });
-  };
+  // Save form to sessionStorage so it persists
+  sessionStorage.setItem('medverify_form', JSON.stringify(form));
+
+  // Navigate with the file in state (file objects can't go in sessionStorage)
+  sessionStorage.removeItem('dashboard_result');
+  navigate('/dashboard', {
+    state: {
+      form,
+      mdcnFile: files.mdcn
+    }
+  });
+};
 
   return (
     <div className="submission-page">
