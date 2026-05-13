@@ -4,7 +4,7 @@ import './Payment.css';
 
 const SERVICE_FEE = 50000;
 const PLATFORM_FEE = 2000;
-const TOTAL_PAYOUT = SERVICE_FEE - PLATFORM_FEE;
+const TOTAL_PAYOUT = SERVICE_FEE + PLATFORM_FEE;
 
 const formatNaira = (amount) =>
   new Intl.NumberFormat('en-NG', {
