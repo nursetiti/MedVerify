@@ -68,3 +68,118 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+This README is designed to impress the judges. It doesn't just list features; it explains the **architectural "why"** behind your decisions, highlighting the **Security-First** approach and the seamless integration between **AI (Python)** and **Fintech (Node.js/Squad)**.
+
+---
+
+# 🏥 MedVerify: AI-Powered Practitioner Credentialing & Payouts
+
+**MedVerify** is a "Security-First" fintech solution designed to automate the verification of medical practitioners and facilitate instant, secure payouts via the **Squad API**. By bridging Computer Vision and NLP with robust financial gates, we ensure that only verified professionals receive funds.
+
+## 🏗️ System Architecture
+
+MedVerify uses a high-performance micro-service architecture:
+
+* **Primary Backend:** Node.js / Express (The Orchestrator)
+* **Security Engine:** Python / FastAPI (CV & NLP Pipeline)
+* **Database:** PostgreSQL with Sequelize ORM
+* **Payment Gateway:** Squad (GTBank) Payout & Webhook API
+
+---
+
+## 🛡️ Key Security Features
+
+### 1. The AI Trust Gate
+
+Every document uploaded undergoes a dual-layer analysis:
+
+* **Computer Vision (CV):** Detects digital tampering, Photoshop artifacts, and metadata inconsistencies.
+* **NLP Pipeline:** Extracts license numbers and validates them against a secure medical registry.
+
+### 2. Conditional Payout Logic
+
+Payouts are never manual. The **Squad Payout API** is only triggered if the AI returns a `Trust Score >= 75`.
+
+* **Score < 40:** Immediate account suspension and fraud logging.
+* **Score 40-74:** Transaction flagged for manual human audit.
+
+### 3. Real-time Webhook Synchronization
+
+We don't "guess" if a payment worked. Our dedicated **Webhook Listener** processes asynchronous updates from Squad, moving transaction statuses from `PENDING` to `SUCCESS` only after bank confirmation.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+* Node.js (v16+)
+* Python (3.9+)
+* PostgreSQL
+* Squad Sandbox Secret Key
+
+### Installation
+
+1. **Clone the Repo**
+```bash
+git clone https://github.com/your-repo/medverify.git
+
+```
+
+
+2. **Backend Setup (Node.js)**
+```bash
+cd medverify-backend
+npm install
+cp .env.example .env
+npm start
+
+```
+
+
+3. **ML Service Setup (Python)**
+```bash
+cd medverify-ml
+pip install -r requirements.txt
+python api.py
+
+```
+
+
+
+---
+
+## 📡 API Endpoints
+
+### Authentication
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/v1/auth/signup` | Register a new practitioner |
+| `POST` | `/api/v1/auth/login` | Returns JWT and session data |
+
+### Verification & Payout
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/v1/verify/process` | **Protected.** Uploads ID, runs AI, and triggers Squad |
+
+### Webhooks
+
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| `POST` | `/api/v1/webhooks/squad` | Listens for payout success/failure from Squad |
+
+---
+
+## 🛠️ Tech Stack
+
+* **Backend:** Node.js, Express, Sequelize
+* **ML Engine:** FastAPI, PyTorch, Tesseract OCR
+* **Payments:** Squad Payout API
+* **Infrastructure:** JWT for Auth, Multer for Binary Handling, Axios for Cross-Service Communication
+
+---
+
+**Built for the 2026 Squad Hackathon.**
+*Protecting the integrity of medical disbursements through Intelligent Automation.*
