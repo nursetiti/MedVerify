@@ -1,6 +1,6 @@
 const { analyzeMedicalCredential } = require('../services/mlService');
 const { initiatePayout } = require('../services/squadService');
-const { Verification, Payouts, Practitioner, Sequelize } = require('../models');
+const { Verification, Payouts, Practitioner, Sequelize, User } = require('../models');
 const { Op } = require('sequelize');
 
 
@@ -103,8 +103,15 @@ exports.processVerificationAndPayment = async (req, res) => {
     const { practitionerId, amount, licenseNumber } = req.body;
 
     try {
+        if (!licenseNumber) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "License number is required." 
+            });
+        }
+        const cleanLicense = licenseNumber.trim().toUpperCase();
         const licenseRegex = /^MDN\/\d{4,6}$/;
-        if (!licenseRegex.test(licenseNumber)) {
+        if (!licenseRegex.test(cleanLicense)) {
             return res.status(400).json({ 
                 success: false, 
                 message: "Invalid MDCN License format. Format should be MDN/ followed by 4-6 digits." 
@@ -117,7 +124,7 @@ exports.processVerificationAndPayment = async (req, res) => {
         }
 
         const licenseInUse = await User.findOne({ 
-            where: { licenseNumber, id: { [Op.ne]: practitionerId } } 
+            where: { licenseNumber: cleanLicense, id: { [Op.ne]: practitionerId } } 
         });
         if (licenseInUse) {
             return res.status(400).json({ success: false, message: "This license number is already linked to another account." });
@@ -165,9 +172,11 @@ exports.processVerificationAndPayment = async (req, res) => {
                 isActive: false, 
                 isVerified: false 
             });
-            const primaryReason = aiResult.ml_flags.length > 0 
-            ? aiResult.ml_flags.join(', ') 
-            : "Low Trust Score";
+            const mlFlags = aiResult.ml_flags || [];
+
+            const primaryReason = mlFlags.length > 0 
+                ? mlFlags.join(', ') 
+                : "Low Trust Score";
 
             console.log(`\x1b[41m%s\x1b[0m`, `[SECURITY ALERT] Account Deactivated.`);
             console.log(`\x1b[33m%s\x1b[0m`, `Reason: ${primaryReason}`);

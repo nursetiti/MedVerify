@@ -36,7 +36,7 @@ const Verification = sequelize.define('verification', {
         comment: 'Stores detailed AI analysis: tampering, seal_check, registry_match'
     },
     status: {
-        type: DataTypes.ENUM('UNDER_REVIEW', 'APPROVED', 'REJECTED', 'FLAGGED'),
+        type: DataTypes.ENUM('UNDER_REVIEW', 'APPROVED', 'REJECTED', 'FLAGGED', 'BLOCKED'),
         allowNull: false,
         defaultValue: 'UNDER_REVIEW'
     },
