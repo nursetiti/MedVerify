@@ -1,0 +1,41 @@
+[
+  {
+    "timestamp": "2026-05-09 20:23:35",
+    "practitioner_name": "Prof. Jumoke Tinubu",
+    "reg_number": "MDCN/2005/00158",
+    "trust_score": 66.2,
+    "decision": "REVIEW",
+    "flags": [
+      "document_tampering_detected"
+    ],
+    "alert_sent_to": "authorities@mdcn.gov.ng"
+  },
+  {
+    "timestamp": "2026-05-12 04:09:50",
+    "practitioner_name": "Unknown",
+    "reg_number": "Unknown",
+    "trust_score": 3.8,
+    "decision": "BLOCK",
+    "flags": [
+      "document_tampering_detected",
+      "registry_mismatch",
+      "incomplete_fields",
+      "not_found_in_registry"
+    ],
+    "alert_sent_to": "authorities@mdcn.gov.ng"
+  },
+  {
+    "timestamp": "2026-05-12 04:10:16",
+    "practitioner_name": "Unknown",
+    "reg_number": "Unknown",
+    "trust_score": 3.8,
+    "decision": "BLOCK",
+    "flags": [
+      "document_tampering_detected",
+      "registry_mismatch",
+      "incomplete_fields",
+      "not_found_in_registry"
+    ],
+    "alert_sent_to": "authorities@mdcn.gov.ng"
+  }
+]

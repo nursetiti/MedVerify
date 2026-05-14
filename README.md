@@ -1,104 +1,70 @@
-# MedVerify Backend 🩺🛡️
+# Getting Started with Create React App
 
-**MedVerify** is a security-first backend infrastructure designed to authenticate medical practitioners by integrating with the **Squad API** and national medical registries. This project was built during the **HNG Internship** and focuses on scalable, modular, and secure verification workflows.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## 🚀 Features
+## Available Scripts
 
-* **Secure Authentication**: JWT-based auth with modular service-based logic.
-* **Medical Verification**: Integration with **Squad API** for payment-triggered license verification.
-* **Relational Data Modeling**: Structured PostgreSQL/MySQL management using Sequelize for high data integrity.
-* **Security-First Architecture**: Implemented signature verification for webhooks and strict file upload validation.
+In the project directory, you can run:
 
----
+### `npm start`
 
-## 🛠️ Tech Stack
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-* **Runtime**: Node.js (Express.js).
-* **Database**: PostgreSQL / MySQL (Sequelize ORM).
-* **Security**: Crypto (Hmac), JWT, Helmet.
-* **Payments/Webhooks**: Squad API.
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
----
+### `npm test`
 
-## 📁 Project Structure
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-```bash
-├── config/             # Database & environment configurations
-├── controllers/        # Logical handlers (Auth, Webhooks, Admin)
-├── middleware/         # Security & File upload (Multer) logic
-├── models/             # Database schemas (User, Verification, etc.)
-├── routes/             # API endpoint definitions
-├── services/           # External API integrations (Squad, Auth)
-└── server.js           # Main application entry point
+### `npm run build`
 
-```
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
----
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
-## ⚙️ Installation & Setup
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-### 1. Clone the Repository
+### `npm run eject`
 
-```bash
-git clone https://github.com/nursetiti/MedVerify.git
-cd MedVerify
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-```
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-### 2. Install Dependencies
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-Ensure you have Node.js installed. Run a clean installation to avoid dependency conflicts:
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-```bash
-npm install
+## Learn More
 
-```
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-### 3. Environment Variables
+To learn React, check out the [React documentation](https://reactjs.org/).
 
-Create a `.env` file in the root directory and add the following:
+### Code Splitting
 
-```env
-PORT=5000
-DB_NAME=medverify_db
-DB_USER=your_user
-DB_PASSWORD=your_password
-DB_HOST=localhost
-JWT_SECRET=your_jwt_secret
-SQUAD_SECRET_KEY=your_squad_secret_key
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
 
-```
+### Analyzing the Bundle Size
 
-### 4. Run the Server
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-```bash
-# Development mode
-npm run dev
+### Making a Progressive Web App
 
-# Production mode
-node server.js
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
 
-```
+### Advanced Configuration
 
----
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
 
-## 🔒 Security Implementation
+### Deployment
 
-As an **aspiring penetration tester**, I have prioritized the following security measures:
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
 
-* **Webhook Validation**: All Squad API callbacks are verified using HMAC SHA-512 signatures to prevent spoofing.
-* **Input Sanitization**: Strict validation of medical license formats and document uploads.
-* **Role-Based Access Control (RBAC)**: Protected routes for admin and practitioner data via custom middleware.
+### `npm run build` fails to minify
 
----
-## 👨‍💻 Author
-
-**Ajiboye Peter**
-
-*Backend Developer | Certified Network Technician | Cybersecurity Enthusiast*
-
-[LinkedIn](https://www.google.com/search?q=https://www.linkedin.com/in/ajiboye-peter) | [Portfolio](https://www.google.com/search?q=%23)
-
----
-
-**License**: Distributed under the MIT License. See `LICENSE` for more information.
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
