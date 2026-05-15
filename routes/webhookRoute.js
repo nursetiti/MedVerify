@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const webhookController = require('../controllers/webhookController');
-const upload = require('../middleware/upload');
-const { protect } = require('../services/authService');
+const webhookController = require('../controllers/webhookController'); // Path to your file
 
-router.post('/squad', protect, upload.single('document'), webhookController.handleWebhook);
+// Make sure it is a POST request and matches the path you put in the dashboard
+router.post('/squad', webhookController.handleSquadWebhook);
 
 module.exports = router;

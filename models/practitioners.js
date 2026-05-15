@@ -43,6 +43,14 @@ const Practitioner = sequelize.define('practitioner', {
             len: [10, 10]
         }
     },
+    // beneficiaryAccount: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    //     validate: {
+    //         len: [10, 10]
+    //     },
+    //     comment: 'Secondary account for payouts if different from accountNumber'
+    // },
     walletAddress: {
         type: DataTypes.STRING,
         allowNull: true,

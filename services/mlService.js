@@ -8,7 +8,7 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL;
 
 const analyzeCredentials = async (mdcnPath, idPath, name, regNo) => {
     try {
-        const response = await axios.post(`${process.env.ML_SERVICE_URL}/analyze`, {
+        const response = await axios.post(`${process.env.ML_SERVICE_URL}/verify`, {
             mdcn_path: mdcnPath,
             id_path: idPath,
             full_name: name,

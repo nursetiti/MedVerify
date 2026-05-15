@@ -1,70 +1,98 @@
-# Getting Started with Create React App
+# 🛡️ Practitioner Verification & Payout System
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+### *Secure Fintech Infrastructure with Integrated Machine Learning*
 
-## Available Scripts
+This backend service automates the lifecycle of professional practitioner verification. By combining **Squad’s Financial Infrastructure** with a **Machine Learning Inference Engine**, the system ensures that only verified, paid practitioners are onboarded and settled.
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## 🏗️ System Architecture
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The project follows a modular microservices-inspired architecture:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+* **Fintech Layer:** Managed via Squad API for collections and payouts.
+* **Verification Logic:** A Node.js/Express core handling business rules and HMAC security.
+* **Intelligence Layer:** A dedicated ML service for automated credential validation and fraud detection.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Core Features
 
-### `npm run build`
+* **Dynamic Virtual Accounts:** Instant GTBank account generation for practitioner payments.
+* **Cryptographic Webhook Security:** Robust **HMAC SHA512** signature validation using `rawBody` buffers to prevent spoofing and data tampering.
+* **ML-Driven Validation:** Automated document analysis via an external ML service triggered post-payment.
+* **Automated Payouts:** Instant settlement orchestration via Squad's payout corridors upon successful ML verification.
+* **ACID Transactions:** Sequelize-managed database transactions ensuring no practitioner is verified without a confirmed payment.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Tech Stack
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+* **Backend:** Node.js, Express.js
+* **Database:** PostgreSQL / MySQL (Sequelize ORM)
+* **Security:** HMAC SHA512, JWT, Helmet.js
+* **ML Bridge:** RESTful API / Axios (Inter-service communication)
+* **DevOps:** Ngrok (Webhook tunneling), Dotenv
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 📡 Webhook & ML Integration Flow
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The system implements a high-integrity "Check-then-Act" workflow:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. **Ingestion:** Squad sends a `POST` request to `/api/v1/webhooks/squad`.
+2. **Security Gate:** The system verifies the `x-squad-encrypted-body` header against a locally generated hash.
+3. **Event Routing:** On `charge_successful`, the system triggers the **ML Inference Engine**.
+4. **Inference:** The ML model analyzes the practitioner’s data; if the confidence score is valid, the backend proceeds.
+5. **Finality:** The `squadService.executePayout` is called, and the database is updated.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+---
 
-## Learn More
+## ⚙️ Setup & Installation
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 1. Environment Configuration
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Create a `.env` file in the root directory:
 
-### Code Splitting
+```env
+PORT=5000
+SQUAD_SECRET_KEY=sandbox_sk_xxxxxxx 
+ML_SERVICE_URL=http://localhost:8000/api/v1/verify
+DB_NAME=practitioner_db
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+```
 
-### Analyzing the Bundle Size
+### 2. Installation
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm install
+npx sequelize-cli db:migrate
+npm run dev
 
-### Making a Progressive Web App
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 3. Webhook Tunneling
 
-### Advanced Configuration
+To receive live notifications from Squad in your local environment:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```bash
+ngrok http 5000
 
-### Deployment
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Update your Squad Dashboard with the resulting URL: `https://your-ngrok-id.ngrok-free.dev/api/v1/webhooks/squad`.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 🔒 Security Implementation Notes
+
+* **Raw Buffer Verification:** We intercept the raw request stream to ensure the HMAC signature is calculated on the exact data sent by Squad, avoiding `JSON.parse` whitespace discrepancies.
+* **Idempotency:** The system checks for existing transaction references to prevent duplicate payouts from retried webhook events.
+
+---
+
+## 👨‍💻 Author
+
+**Ajiboye Peter** *300L Computer Science Student, University of Lagos* *Certified Network Technician (Cisco)* *Backend Developer & Aspiring Penetration Tester*
+
+---

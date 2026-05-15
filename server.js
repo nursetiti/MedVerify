@@ -1,31 +1,36 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const sequelize = require('./config/database');
 require('dotenv').config();
-const { sequelize } = require('./models');
 
 // Route Imports
 const adminRoutes = require('./routes/adminRoute');
-// Assuming you'll create these based on your existing controllers
 const authRoutes = require('./routes/authRoute'); 
 const verificationRoutes = require('./routes/verificationRoute');
 const webhookRoutes = require('./routes/webhookRoute');
+const fraudRoutes = require('./routes/fraudRoute');
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+    verify: (req, res, buf) => {
+        req.rawBody = buf.toString();
+    }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Static folder for uploads (Security note: Ensure .gitignore handles this)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/verify', verificationRoutes);
-app.use('/api/webhooks', webhookRoutes);
+app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/verify', verificationRoutes);
+app.use('/api/v1/webhooks', webhookRoutes);
+app.use('/api/v1/fraud', fraudRoutes);
 
 // Health Check
 app.get('/', (req, res) => {
@@ -41,7 +46,7 @@ const startServer = async () => {
         console.log('Database connected successfully.');
         
         // Use { alter: true } only in development; never in production
-        await sequelize.sync({ alter: false }); 
+        await sequelize.sync({ alter: true }); 
 
         app.listen(PORT, () => {
             console.log(`Server is running on port ${PORT}`);

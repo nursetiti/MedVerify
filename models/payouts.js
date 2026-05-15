@@ -10,7 +10,7 @@ const Payouts = sequelize.define('payouts', {
     },
     verification_id: {
         type: DataTypes.UUID,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'verifications', 
             key: 'id'

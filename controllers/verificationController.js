@@ -110,7 +110,7 @@ exports.processVerificationAndPayment = async (req, res) => {
             });
         }
         const cleanLicense = licenseNumber.trim().toUpperCase();
-        const licenseRegex = /^MDN\/\d{4,6}$/;
+        const licenseRegex = /^MDN|MDCN\/\d{4,6}$/;
         if (!licenseRegex.test(cleanLicense)) {
             return res.status(400).json({ 
                 success: false, 
@@ -131,8 +131,13 @@ exports.processVerificationAndPayment = async (req, res) => {
         }
         
         if (!req.file) {
-            return res.status(400).json({ success: false, message: "No credential document provided" });
+            return res.status(400).json({ 
+                success: false, 
+                message: "No credential document provided" 
+            });
         }
+
+        // 2. CHANGE: Access path directly from req.file
         const documentPath = req.file.path;
 
         // 3. AI ANALYSIS (Bridge to Python Service)
@@ -227,5 +232,150 @@ exports.processVerificationAndPayment = async (req, res) => {
     } catch (error) {
         console.error('Verification Error:', error);
         res.status(500).json({ success: false, error: "Internal processing error" });
+    }
+};
+
+exports.processVerification = async (req, res) => {
+    const { practitionerId, licenseNumber } = req.body;
+
+    try {
+        // 1. Initial Validations
+        if (!licenseNumber || !practitionerId) {
+            return res.status(400).json({ success: false, message: "Practitioner ID and License Number are required." });
+        }
+
+        const cleanLicense = licenseNumber.trim().toUpperCase();
+        const licenseRegex = /^(MDN|MDCN)\/\d{4,6}$/;
+        if (!licenseRegex.test(cleanLicense)) {
+            return res.status(400).json({ success: false, message: "Invalid MDCN format (e.g., MDCN/12345)." });
+        }
+
+        // 2. Resource Checks
+        const practitioner = await Practitioner.findByPk(practitionerId);
+        if (!practitioner) return res.status(404).json({ success: false, message: "Practitioner not found." });
+
+        const licenseInUse = await User.findOne({ 
+            where: { licenseNumber: cleanLicense, id: { [Op.ne]: practitionerId } } 
+        });
+        if (licenseInUse) {
+            return res.status(400).json({ success: false, message: "License already linked to another account." });
+        }
+
+        if (!req.file) return res.status(400).json({ success: false, message: "Credential document (PDF/Image) is required." });
+
+        // 3. AI Analysis
+        const documentPath = req.file.path;
+        const aiResult = await analyzeMedicalCredential(documentPath);
+        const score = aiResult.trust_score;
+
+        // 4. Trust Hierarchy Logic
+        let status = 'UNDER_REVIEW';
+        if (score > 70) status = 'APPROVED';
+        if (score < 30) status = 'BLOCKED';
+
+        // 5. Database Update (Atomic Update)
+        const verification = await Verification.create({
+            practitioner_id: practitioner.id,
+            document_url: documentPath,
+            trust_score: score,
+            ml_flags: aiResult.ml_flags,
+            status: status
+        });
+
+        // Apply consequences
+        if (status === 'APPROVED') {
+            await practitioner.update({ isVerified: true, licenseNumber: cleanLicense });
+        } else if (status === 'BLOCKED') {
+            await practitioner.update({ isActive: false, isVerified: false });
+            console.error(`[SECURITY ALERT] Fraud detected for License: ${cleanLicense}`);
+        }
+
+        return res.status(200).json({
+            success: true,
+            status,
+            data: {
+                trustScore: score,
+                flags: aiResult.ml_flags,
+                verificationId: verification.id
+            }
+        });
+
+    } catch (error) {
+        console.error('Verification System Error:', error);
+        res.status(500).json({ success: false, error: "Internal verification failure." });
+    }
+};
+
+exports.initiateManualPayout = async (req, res) => {
+    const { practitionerId, amount, transaction_ref } = req.body;
+
+    try {
+        if (!practitionerId || !amount || Number(amount) <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: "Valid practitionerId and amount (> 0) are required."
+            });
+        }
+
+        const practitioner = await Practitioner.findByPk(practitionerId);
+        
+        if (!practitioner || !practitioner.isVerified) {
+            return res.status(403).json({ 
+                success: false, 
+                message: "Payout Blocked: Practitioner must be 'Verified'." 
+            });
+        }
+
+        if (!practitioner.bankCode || !practitioner.accountNumber) {
+            return res.status(400).json({
+                success: false,
+                message: "Practitioner bank details are incomplete."
+            });
+        }
+
+        const squadResponse = await initiatePayout({
+            amount: Number(amount),
+            bankCode: practitioner.bankCode,
+            accountNumber: practitioner.accountNumber,
+            accountName: practitioner.accountName || practitioner.fullName, // if you have it
+            practitionerId: practitioner.id,
+            licenseNumber: practitioner.licenseNumber,
+            transaction_ref: transaction_ref
+        });
+
+        if (squadResponse.success) {
+            const payout = await Payouts.create({
+                practitioner_id: practitioner.id,
+                squad_transaction_ref: squadResponse.data?.transaction_reference,
+                amount: Number(amount),
+                status: 'PENDING',
+                verification_id: null
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: "Manual payout initiated successfully",
+                data: {
+                    payout_id: payout.id,
+                    transaction_reference: squadResponse.data?.transaction_reference,
+                    ...squadResponse.data
+                }
+            });
+        } else {
+            console.error("Squad API Error:", squadResponse.squadError || squadResponse);
+
+            return res.status(400).json({ 
+                success: false, 
+                message: squadResponse.message,
+                squadDetails: process.env.NODE_ENV === 'development' ? squadResponse.squadError : undefined
+            });
+        }
+    } catch (error) {
+        console.error("Initiate Manual Payout Error:", error);
+        res.status(500).json({ 
+            success: false, 
+            message: "Internal server error",
+            error: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 };

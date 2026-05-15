@@ -1,13 +1,41 @@
+// models/index.js  (or associations.js)
 const User = require('./user');
 const Practitioner = require('./practitioners');
 const Verification = require('./verifications');
+const Payouts = require('./Payouts');        // ← Add this
 
-// 1. One-to-One: A User (Role: Practitioner) has one professional profile
-User.hasOne(Practitioner, { foreignKey: 'userId', as: 'profile', onDelete: 'CASCADE' });
-Practitioner.belongsTo(User, { foreignKey: 'userId' });
+// Associations
+User.hasOne(Practitioner, { 
+    foreignKey: 'userId', 
+    as: 'profile', 
+    onDelete: 'CASCADE' 
+});
 
-// 2. One-to-Many: A Practitioner has many verification attempts over time
-Practitioner.hasMany(Verification, { foreignKey: 'practitionerId', as: 'verificationLogs' });
-Verification.belongsTo(Practitioner, { foreignKey: 'practitionerId' });
+Practitioner.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-module.exports = { User, Practitioner, Verification };
+Practitioner.hasMany(Verification, { 
+    foreignKey: 'practitioner_id',   // Make sure this matches your model
+    as: 'verificationLogs' 
+});
+
+Verification.belongsTo(Practitioner, { 
+    foreignKey: 'practitioner_id', 
+    as: 'practitioner' 
+});
+
+// Add Payouts associations
+Practitioner.hasMany(Payouts, { 
+    foreignKey: 'practitioner_id', 
+    as: 'payouts' 
+});
+
+Payouts.belongsTo(Practitioner, { 
+    foreignKey: 'practitioner_id' 
+});
+
+module.exports = { 
+    User, 
+    Practitioner, 
+    Verification, 
+    Payouts          // ← Must export this
+};
