@@ -23,9 +23,6 @@ from PIL import Image
 from rapidfuzz import fuzz, process
 
 
-
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-
 REGISTRY_PATH = "data/mock_registry.json"
 
 
