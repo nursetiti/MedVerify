@@ -1,74 +1,6 @@
 import { useState, useEffect } from 'react';
 import './Admin.css';
 
-const MOCK_CASES = [
-  {
-    id: 'CASE-001',
-    name: 'Dr. Emeka Nwosu',
-    reg: 'MDCN/2020/11032',
-    specialty: 'Surgery',
-    score: 31,
-    status: 'pending',
-    topFlag: 'Document tampering detected',
-    submitted: '2h ago',
-    txn: 'TXN-88201',
-    flags: [
-      { sev: 'high', title: 'Document tampering detected', desc: 'CV model detected image manipulation signals in the uploaded certificate with high confidence.' },
-      { sev: 'high', title: 'Registry mismatch', desc: 'Registration number MDCN/2020/11032 returned no strong match in the MDCN registry.' },
-      { sev: 'medium', title: 'Incomplete OCR fields', desc: 'Specialty and registration date could not be extracted from the document.' },
-    ],
-    reasoning: 'Multiple high-severity signals detected. CV model flagged tampering with high confidence and registry cross-reference failed. Payment blocked pending manual review.',
-    extracted: { name: 'Dr. Emeka Nwosu', reg_number: 'MDCN/2020/11032', specialty: null, status: null },
-  },
-  {
-    id: 'CASE-002',
-    name: 'Dr. Fatima Bello',
-    reg: 'MDCN/2018/07741',
-    specialty: 'Internal Medicine',
-    score: 58,
-    status: 'pending',
-    topFlag: 'Specialty mismatch with registry',
-    submitted: '5h ago',
-    txn: 'TXN-88187',
-    flags: [
-      { sev: 'medium', title: 'Specialty mismatch', desc: 'Practitioner claims Internal Medicine but registry record shows General Practice.' },
-      { sev: 'low', title: 'Incomplete OCR fields', desc: 'Registration date field could not be fully extracted from the uploaded image.' },
-    ],
-    reasoning: 'Moderate concern. Specialty mismatch could reflect an upgrade not yet reflected in the registry. Recommend requesting updated registry confirmation before clearing payment.',
-    extracted: { name: 'Dr. Fatima Bello', reg_number: 'MDCN/2018/07741', specialty: 'Internal Medicine', status: 'active' },
-  },
-  {
-    id: 'CASE-003',
-    name: 'Dr. Kwame Asante',
-    reg: 'MDCN/2015/00320',
-    specialty: 'Pediatrics',
-    score: 44,
-    status: 'pending',
-    topFlag: 'Practitioner marked inactive in registry',
-    submitted: 'Yesterday',
-    txn: 'TXN-88102',
-    flags: [
-      { sev: 'high', title: 'Practitioner inactive', desc: 'Registry record shows this practitioner is currently marked as inactive.' },
-      { sev: 'medium', title: 'Registry mismatch', desc: 'Name fuzzy match score is below threshold — possible identity discrepancy.' },
-    ],
-    reasoning: 'Practitioner registry status is inactive. Payment must remain blocked until status is confirmed through official MDCN channels.',
-    extracted: { name: 'Dr. Kwame Asante', reg_number: 'MDCN/2015/00320', specialty: 'Pediatrics', status: 'inactive' },
-  },
-];
-
-const getFlagDesc = (flag) => {
-  const descs = {
-    document_tampering_detected: 'CV model detected image manipulation signals in the uploaded certificate with high confidence.',
-    registry_mismatch: 'Extracted fields do not strongly match any record in the MDCN registry database.',
-    incomplete_fields: 'Some credential fields could not be fully extracted from the image.',
-    practitioner_revoked: 'The matched registry record shows this practitioner licence has been revoked.',
-    practitioner_inactive: 'The matched registry record shows this practitioner is currently inactive.',
-    not_found_in_registry: 'The registration number could not be matched to any record in the MDCN registry.',
-  };
-  return descs[flag] || 'Anomaly detected during verification.';
-};
-
-const CASE_STATUS_OVERRIDES_KEY = 'admin_case_statuses';
 const FLAGGED_PENDING_COUNT_KEY = 'flagged_pending_count';
 const AUTO_VERIFIED_COUNT_KEY = 'auto_verified_count';
 
@@ -82,22 +14,30 @@ const publishFlaggedPendingCount = (nextCases) => {
 
 export default function Admin() {
   const [cases, setCases] = useState([]);
+  const [fraudAlerts, setFraudAlerts] = useState([]);
   const [autoVerifiedCount, setAutoVerifiedCount] = useState(0);
   const [selectedCase, setSelectedCase] = useState(null);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    const saved = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
-    const statusOverrides = JSON.parse(sessionStorage.getItem(CASE_STATUS_OVERRIDES_KEY) || '{}');
-    const mockCases = MOCK_CASES.map(c => ({
-      ...c,
-      status: statusOverrides[c.id] || c.status,
-    }));
-    const loadedCases = [...saved, ...mockCases];
+    const durableCases = JSON.parse(localStorage.getItem('flagged_cases') || '[]');
+    const sessionCases = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
+    const allCases = [...durableCases, ...sessionCases].filter((item, index, all) =>
+      item?.id && all.findIndex(match => match.id === item.id) === index
+    );
 
-    setCases(loadedCases);
-    setAutoVerifiedCount(Number(sessionStorage.getItem(AUTO_VERIFIED_COUNT_KEY) || '0'));
-    publishFlaggedPendingCount(loadedCases);
+    setCases(allCases);
+    setAutoVerifiedCount(Number(localStorage.getItem(AUTO_VERIFIED_COUNT_KEY) || '0'));
+    publishFlaggedPendingCount(allCases);
+
+    fetch('https://medverify-api.onrender.com/fraud-alerts')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setFraudAlerts(data);
+        else if (data && Array.isArray(data.alerts)) setFraudAlerts(data.alerts);
+        else if (data && data.data && Array.isArray(data.data)) setFraudAlerts(data.data);
+      })
+      .catch(err => console.error("Failed to fetch fraud alerts:", err));
   }, []);
 
   // const stats = {
@@ -107,14 +47,9 @@ export default function Admin() {
   //   pending: cases.filter(c => c.status === 'pending').length,
   // };
 
-  const BASE_STATS = {
-    cleared: 1189,
-    blocked: 55,
-  };
-
   const stats = {
-    cleared: BASE_STATS.cleared + autoVerifiedCount + cases.filter(c => c.status === 'cleared').length,
-    blocked: BASE_STATS.blocked + cases.filter(c => c.status === 'blocked').length,
+    cleared: autoVerifiedCount + cases.filter(c => c.status === 'cleared').length,
+    blocked: cases.filter(c => c.status === 'blocked').length,
     pending: cases.filter(c => c.status === 'pending').length,
   };
 
@@ -128,19 +63,12 @@ export default function Admin() {
 
   const handleAction = (action, caseId) => {
     const updated = cases.map(c =>
-      c.id === caseId ? { ...c, status: action } : c
+      c.id === caseId ? { ...c, status: action, reviewedAt: new Date().toISOString() } : c
     );
     setCases(updated);
 
-    // Update sessionStorage too
-    const saved = updated.filter(c => !MOCK_CASES.find(m => m.id === c.id));
-    const statusOverrides = JSON.parse(sessionStorage.getItem(CASE_STATUS_OVERRIDES_KEY) || '{}');
-    if (MOCK_CASES.find(m => m.id === caseId)) {
-      statusOverrides[caseId] = action;
-    }
-
-    sessionStorage.setItem('flagged_cases', JSON.stringify(saved));
-    sessionStorage.setItem(CASE_STATUS_OVERRIDES_KEY, JSON.stringify(statusOverrides));
+    localStorage.setItem('flagged_cases', JSON.stringify(updated));
+    sessionStorage.setItem('flagged_cases', JSON.stringify(updated));
     publishFlaggedPendingCount(updated);
     setSelectedCase(null);
   };
@@ -168,17 +96,21 @@ export default function Admin() {
         <div className="stat-card">
           <div className="stat-label">Total Verified</div>
           <div className="stat-val" style={{ color: '#06305A' }}>{stats.total.toLocaleString()}</div>
-          <div className="stat-sub">↑ 12 today</div>
+          <div className="stat-sub">Real-time total</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Cleared</div>
           <div className="stat-val" style={{ color: '#1D9E75' }}>{stats.cleared.toLocaleString()}</div>
-          <div className="stat-sub">95.3% rate</div>
+          <div className="stat-sub">
+            {stats.total > 0 ? ((stats.cleared / stats.total) * 100).toFixed(1) + '%' : '0%'} rate
+          </div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Blocked</div>
           <div className="stat-val" style={{ color: '#C94040' }}>{stats.blocked.toLocaleString()}</div>
-          <div className="stat-sub">4.4% fraud rate</div>
+          <div className="stat-sub">
+            {stats.total > 0 ? ((stats.blocked / stats.total) * 100).toFixed(1) + '%' : '0%'} rate
+          </div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Pending Review</div>
@@ -243,7 +175,7 @@ export default function Admin() {
                   <span className={`status-badge status-${c.status}`}>
                     {c.status === 'pending' ? '⏳ Pending'
                       : c.status === 'cleared' ? '✅ Cleared'
-                      : '🚫 Blocked'}
+                        : '🚫 Blocked'}
                   </span>
                 </td>
                 <td>
@@ -266,6 +198,42 @@ export default function Admin() {
                   style={{ textAlign: 'center', padding: '32px', color: '#888780' }}
                 >
                   No cases found
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* FRAUD ALERTS TABLE */}
+      <div className="admin-card" style={{ marginTop: '24px' }}>
+        <div className="admin-card-header">
+          <div className="admin-card-title">System Fraud Alerts</div>
+          <div className="admin-sub" style={{ marginLeft: '16px', marginTop: '4px' }}>Alerts automatically sent to authorities</div>
+        </div>
+
+        <table className="cases-table">
+          <thead>
+            <tr>
+              <th>Alert Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fraudAlerts.map((alert, idx) => (
+              <tr key={idx}>
+                <td style={{ paddingTop: '16px', paddingBottom: '16px' }}>
+                  <pre style={{ margin: 0, fontSize: '12px', whiteSpace: 'pre-wrap', color: '#1a1a18', background: '#faf9f6', padding: '12px', borderRadius: '6px', border: '1px solid #F1EFE8' }}>
+                    {JSON.stringify(alert, null, 2)}
+                  </pre>
+                </td>
+              </tr>
+            ))}
+            {fraudAlerts.length === 0 && (
+              <tr>
+                <td
+                  style={{ textAlign: 'center', padding: '32px', color: '#888780' }}
+                >
+                  No system fraud alerts available
                 </td>
               </tr>
             )}
@@ -335,7 +303,7 @@ export default function Admin() {
                     <div className="flag-icon">
                       {flag.sev === 'high' ? '🔴'
                         : flag.sev === 'medium' ? '🟡'
-                        : '🔵'}
+                          : '🔵'}
                     </div>
                     <div>
                       <div className="flag-title">{flag.title}</div>

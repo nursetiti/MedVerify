@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Dashboard.css';
 
-const API_URL = 'http://localhost:8000/verify';
+const API_URL = 'https://medverify-api.onrender.com/verify';
 
 const getFlagDesc = (flag) => {
   const descs = {
@@ -37,7 +37,9 @@ const getFlagSeverity = (flag) => {
 
 const saveFlaggedCase = (resultData, formData) => {
   if (resultData.decision === 'BLOCK' || resultData.decision === 'REVIEW') {
-    const existing = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
+    const durableExisting = JSON.parse(localStorage.getItem('flagged_cases') || '[]');
+    const sessionExisting = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
+
     const newCase = {
       id: `CASE-${Date.now()}`,
       name: formData.fullName,
@@ -58,9 +60,13 @@ const saveFlaggedCase = (resultData, formData) => {
       reasoning: `Trust score of ${resultData.trust_score}/100. ${resultData.decision_label}`,
       extracted: resultData.extracted_fields || {},
     };
-    existing.unshift(newCase);
-    sessionStorage.setItem('flagged_cases', JSON.stringify(existing));
-    console.log('✅ Flagged case saved to sessionStorage:', newCase);
+
+    durableExisting.unshift(newCase);
+    sessionExisting.unshift(newCase);
+
+    localStorage.setItem('flagged_cases', JSON.stringify(durableExisting));
+    sessionStorage.setItem('flagged_cases', JSON.stringify(sessionExisting));
+    console.log('✅ Flagged case saved to localStorage:', newCase);
   } else {
     console.log('ℹ️ Score is CLEAR — not saving to admin');
   }
@@ -75,6 +81,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Scanning credential document...');
   const [result, setResult] = useState(null);
+  const [apiError, setApiError] = useState(false);
 
   const loadingSteps = [
     'Scanning credential document...',
@@ -85,30 +92,30 @@ export default function Dashboard() {
   ];
 
   useEffect(() => {
-  const stateForm = location.state?.form;
-  const stateFile = location.state?.mdcnFile;
-  const savedForm = sessionStorage.getItem('medverify_form');
-  const savedResult = sessionStorage.getItem('dashboard_result');
+    const stateForm = location.state?.form;
+    const stateFile = location.state?.mdcnFile;
+    const savedForm = sessionStorage.getItem('medverify_form');
+    const savedResult = sessionStorage.getItem('dashboard_result');
 
-  if (stateForm) {
-    setForm(stateForm);
-  } else if (savedForm) {
-    setForm(JSON.parse(savedForm));
-  }
+    if (stateForm) {
+      setForm(stateForm);
+    } else if (savedForm) {
+      setForm(JSON.parse(savedForm));
+    }
 
-  if (stateFile) {
-    setMdcnFile(stateFile);
-  } else if (savedResult) {
-    // No new file — just restore previous result
-    setResult(JSON.parse(savedResult));
-  }
-}, [location.state]);
+    if (stateFile) {
+      setMdcnFile(stateFile);
+    } else if (savedResult) {
+      // No new file — just restore previous result
+      setResult(JSON.parse(savedResult));
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (form && mdcnFile && !result && !loading) {
       runVerification(mdcnFile);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form, mdcnFile]);
 
   const generateMockResult = (formData) => {
@@ -127,8 +134,8 @@ export default function Dashboard() {
         decision === 'CLEAR'
           ? 'Payment Cleared'
           : decision === 'REVIEW'
-          ? 'Flag for Manual Review'
-          : 'Payment Blocked',
+            ? 'Flag for Manual Review'
+            : 'Payment Blocked',
       flags,
       score_breakdown: {
         cv_authenticity: parseFloat((score * 0.4).toFixed(1)),
@@ -157,6 +164,7 @@ export default function Dashboard() {
 
   const runVerification = async (file) => {
     setLoading(true);
+    setApiError(false);
 
     let step = 0;
     const stepInterval = setInterval(() => {
@@ -176,13 +184,23 @@ export default function Dashboard() {
       });
 
       clearInterval(stepInterval);
-      setResult(response.data);
-      sessionStorage.setItem('dashboard_result', JSON.stringify(response.data));
-      saveFlaggedCase(response.data, form);
+      
+      const resultData = response.data;
+      const score = resultData.trust_score || 0;
+      resultData.decision = score >= 70 ? 'CLEAR' : score >= 50 ? 'REVIEW' : 'BLOCK';
+      resultData.decision_label = 
+        resultData.decision === 'CLEAR' ? 'Payment Cleared' : 
+        resultData.decision === 'REVIEW' ? 'Flag for Manual Review' : 
+        'Payment Blocked';
+
+      setResult(resultData);
+      sessionStorage.setItem('dashboard_result', JSON.stringify(resultData));
+      saveFlaggedCase(resultData, form);
 
     } catch (err) {
       clearInterval(stepInterval);
       console.error('API error:', err.message);
+      setApiError(true);
 
       const mockResult = generateMockResult(form);
       setResult(mockResult);
@@ -274,6 +292,12 @@ export default function Dashboard() {
       {/* RESULTS */}
       {result && !loading && (
         <>
+          {apiError && (
+            <div className="alert-banner" style={{ background: '#FFF3CD', color: '#856404', border: '1px solid #FFEEBA', marginBottom: '16px' }}>
+              <i className="ti ti-alert-triangle" />
+              Live API is currently unavailable. Displaying simulated verification results.
+            </div>
+          )}
           {result.alert_sent && (
             <div className="alert-banner">
               <i className="ti ti-bell-ringing" />
@@ -312,8 +336,8 @@ export default function Dashboard() {
                 <i className={`ti ${result.decision === 'CLEAR'
                   ? 'ti-circle-check'
                   : result.decision === 'BLOCK'
-                  ? 'ti-circle-x'
-                  : 'ti-alert-circle'}`}
+                    ? 'ti-circle-x'
+                    : 'ti-alert-circle'}`}
                 />
                 {result.decision_label}
               </div>
@@ -445,9 +469,9 @@ export default function Dashboard() {
                     const isMatch =
                       matched && value && matched[key]
                         ? matched[key]
-                            .toString()
-                            .toLowerCase()
-                            .includes(value.toString().toLowerCase())
+                          .toString()
+                          .toLowerCase()
+                          .includes(value.toString().toLowerCase())
                         : null;
                     return (
                       <div className="field-item" key={key}>
@@ -464,25 +488,24 @@ export default function Dashboard() {
                               color: isMatch
                                 ? '#1D9E75'
                                 : isMatch === false
-                                ? '#C94040'
-                                : '#888780',
+                                  ? '#C94040'
+                                  : '#888780',
                             }}
                           >
                             <i
-                              className={`ti ${
-                                isMatch
+                              className={`ti ${isMatch
                                   ? 'ti-circle-check'
                                   : isMatch === false
-                                  ? 'ti-circle-x'
-                                  : 'ti-minus'
-                              }`}
+                                    ? 'ti-circle-x'
+                                    : 'ti-minus'
+                                }`}
                               style={{ fontSize: 11 }}
                             />
                             {isMatch
                               ? 'Registry match'
                               : isMatch === false
-                              ? 'Mismatch'
-                              : 'Extracted'}
+                                ? 'Mismatch'
+                                : 'Extracted'}
                           </div>
                         )}
                       </div>
@@ -505,12 +528,12 @@ export default function Dashboard() {
                             style={
                               key === 'status'
                                 ? {
-                                    color:
-                                      result.matched_record[key] === 'active'
-                                        ? '#1D9E75'
-                                        : '#C94040',
-                                    textTransform: 'capitalize',
-                                  }
+                                  color:
+                                    result.matched_record[key] === 'active'
+                                      ? '#1D9E75'
+                                      : '#C94040',
+                                  textTransform: 'capitalize',
+                                }
                                 : {}
                             }
                           >

@@ -11,6 +11,43 @@ In the project directory, you can run:
 Runs the app in the development mode.\
 Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
+## Squad Payment Gateway
+
+The payment page talks to this app's FastAPI backend, and the backend calls Squad with your secret key.
+Do not put `SQUAD_SECRET_KEY` in React code.
+
+Squad endpoints used:
+
+- Sandbox base URL: `https://sandbox-api-d.squadco.com`
+- Production base URL: `https://api-d.squadco.com`
+- Initiate checkout: `POST /transaction/initiate`
+- Verify transaction: `GET /transaction/verify/{transaction_ref}`
+- Account lookup: `POST /payout/account/lookup`
+- Wallet transfer: `POST /payout/transfer`
+
+Local environment values:
+
+```bash
+REACT_APP_API_BASE_URL=http://localhost:8000
+SQUAD_ENV=sandbox
+SQUAD_API_BASE_URL=https://sandbox-api-d.squadco.com
+SQUAD_SECRET_KEY=sandbox_sk_your_key_here
+SQUAD_MERCHANT_ID=your_merchant_id_here
+```
+
+Run the API from the `ML` directory:
+
+```bash
+uvicorn api:app --reload --port 8000
+```
+
+For payment-only local testing without installing the ML API dependencies, run:
+
+```bash
+cd ML
+python payment_server.py
+```
+
 The page will reload when you make changes.\
 You may also see any lint errors in the console.
 

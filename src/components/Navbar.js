@@ -11,9 +11,12 @@ const getFlaggedCount = () => {
     return Number(savedCount);
   }
 
-  const saved = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
-  const pending = saved.filter(c => c.status === 'pending').length;
-  return pending + 3;
+  const durableCases = JSON.parse(localStorage.getItem('flagged_cases') || '[]');
+  const sessionCases = JSON.parse(sessionStorage.getItem('flagged_cases') || '[]');
+  const allCases = [...durableCases, ...sessionCases].filter((item, index, all) =>
+    item?.id && all.findIndex(match => match.id === item.id) === index
+  );
+  return allCases.filter(c => c.status === 'pending').length;
 };
 
 export default function Navbar() {

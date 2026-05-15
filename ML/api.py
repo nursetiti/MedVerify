@@ -18,9 +18,12 @@ import smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from typing import Any
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 from PIL import Image
+import httpx
 
 from cv_pipeline import build_model, predict_single, compute_trust_score, MODEL_SAVE_PATH
 from nlp_pipeline import load_registry, run_nlp_pipeline
@@ -31,6 +34,13 @@ ALERT_THRESHOLD = 30                     # trust score below this triggers alert
 ALERT_EMAIL = "authorities@mdcn.gov.ng"   # mock — to be replaced in production
 SENDER_EMAIL = "alerts@medverify.ng"      # mock — to be replaced in production
 FRAUD_LOG_PATH = "data/fraud_alerts.json" # local log of all alerts triggered
+SQUAD_ENV = os.getenv("SQUAD_ENV", "sandbox").lower()
+SQUAD_BASE_URL = os.getenv(
+    "SQUAD_API_BASE_URL",
+    "https://api-d.squadco.com" if SQUAD_ENV == "production" else "https://sandbox-api-d.squadco.com",
+)
+SQUAD_SECRET_KEY = os.getenv("SQUAD_SECRET_KEY")
+SQUAD_MERCHANT_ID = os.getenv("SQUAD_MERCHANT_ID", "")
 
 app = FastAPI(
     title="MedVerify API",
@@ -46,6 +56,67 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+class SquadInitiateRequest(BaseModel):
+    email: str
+    amount: int = Field(gt=0, description="Amount in kobo or cent")
+    currency: str = "NGN"
+    transaction_ref: str | None = None
+    customer_name: str | None = None
+    callback_url: str | None = None
+    payment_channels: list[str] = ["card", "bank", "ussd", "transfer"]
+    metadata: dict[str, Any] = {}
+    pass_charge: bool = False
+
+
+class SquadVerifyResponse(BaseModel):
+    transaction_ref: str
+
+
+class SquadAccountLookupRequest(BaseModel):
+    bank_code: str
+    account_number: str
+
+
+class SquadTransferRequest(BaseModel):
+    amount: int = Field(gt=0, description="Amount in kobo")
+    bank_code: str
+    account_number: str
+    account_name: str
+    transaction_reference: str
+    remark: str = "MedVerify practitioner payout"
+    currency_id: str = "NGN"
+
+
+def squad_headers() -> dict[str, str]:
+    if not SQUAD_SECRET_KEY:
+        raise HTTPException(
+            status_code=503,
+            detail="SQUAD_SECRET_KEY is not configured on the API server.",
+        )
+
+    return {
+        "Authorization": f"Bearer {SQUAD_SECRET_KEY}",
+        "Content-Type": "application/json",
+    }
+
+
+async def squad_request(method: str, path: str, **kwargs):
+    url = f"{SQUAD_BASE_URL.rstrip('/')}/{path.lstrip('/')}"
+    async with httpx.AsyncClient(timeout=30) as client:
+        response = await client.request(method, url, headers=squad_headers(), **kwargs)
+
+    try:
+        payload = response.json()
+    except ValueError:
+        payload = {"message": response.text}
+
+    if response.status_code >= 400:
+        message = payload.get("message") or payload.get("detail") or "Squad request failed"
+        raise HTTPException(status_code=response.status_code, detail=message)
+
+    return payload
 
 # Load model + registry once at startup 
 print("[API] Loading registry...")
@@ -139,6 +210,57 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "model_loaded": os.path.exists(MODEL_SAVE_PATH)}
+
+
+@app.post("/payments/squad/initiate")
+async def initiate_squad_payment(payment: SquadInitiateRequest):
+    """
+    Initiates Squad checkout and returns the Squad checkout_url.
+
+    Squad endpoint:
+    POST {sandbox|production}/transaction/initiate
+    """
+    payload = payment.model_dump(exclude_none=True)
+    payload["initiate_type"] = "inline"
+    return await squad_request("POST", "/transaction/initiate", json=payload)
+
+
+@app.get("/payments/squad/verify/{transaction_ref}")
+async def verify_squad_payment(transaction_ref: str):
+    """
+    Verifies a Squad transaction status.
+
+    Squad endpoint:
+    GET {sandbox|production}/transaction/verify/{transaction_ref}
+    """
+    return await squad_request("GET", f"/transaction/verify/{transaction_ref}")
+
+
+@app.post("/payments/squad/account-lookup")
+async def lookup_squad_transfer_account(account: SquadAccountLookupRequest):
+    """
+    Confirms the payout recipient account before transfer.
+
+    Squad endpoint:
+    POST {sandbox|production}/payout/account/lookup
+    """
+    return await squad_request("POST", "/payout/account/lookup", json=account.model_dump())
+
+
+@app.post("/payments/squad/transfer")
+async def create_squad_transfer(transfer: SquadTransferRequest):
+    """
+    Sends funds from a Squad wallet to a bank account.
+
+    Squad endpoint:
+    POST {sandbox|production}/payout/transfer
+    """
+    payload = transfer.model_dump()
+    if SQUAD_MERCHANT_ID and not payload["transaction_reference"].startswith(f"{SQUAD_MERCHANT_ID}_"):
+        payload["transaction_reference"] = f"{SQUAD_MERCHANT_ID}_{payload['transaction_reference']}"
+
+    payload["amount"] = str(payload["amount"])
+    return await squad_request("POST", "/payout/transfer", json=payload)
 
 
 @app.post("/verify")
