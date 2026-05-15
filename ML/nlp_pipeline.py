@@ -34,13 +34,7 @@ def load_registry(path: str = REGISTRY_PATH) -> list:
 
 # 2. Image Preprocessing
 def preprocess_image(image_path: str) -> np.ndarray:
-    """
-    Cleans the image before OCR:
-    - Converts to grayscale
-    - Denoises
-    - Applies adaptive thresholding (handles uneven lighting)
-    - Deskews if needed
-    """
+    #cleans image before OCR
     img = cv2.imread(image_path)
     
     if img is None:
@@ -67,39 +61,40 @@ def preprocess_image(image_path: str) -> np.ndarray:
 
 
 # 3. OCR 
-def run_ocr(preprocessed_img: np.ndarray) -> str:
+def run_ocr(preprocessed_img: np.ndarray) -> dict:
     """
-    Runs OCR with safe fallback mode.
-    Prevents API crashes if Tesseract is unavailable on deployment.
+    OCR with safe fallback + confidence tagging.
     """
 
     try:
         pil_img = Image.fromarray(preprocessed_img)
         config = "--oem 3 --psm 6"
 
-        text = pytesseract.image_to_string(
-            pil_img,
-            config=config
-        )
+        text = pytesseract.image_to_string(pil_img, config=config)
 
-        # fallback if OCR returns empty
         if not text.strip():
             raise ValueError("Empty OCR result")
 
         print("[OCR] Real OCR successful")
-        return text
+
+        return {
+            "text": text,
+            "ocr_mode": "real"
+        }
 
     except Exception as e:
         print(f"[OCR] Fallback mode activated: {e}")
 
-        # Demo-safe fallback text
-        return """
-        REGISTRANT NAME: John Doe
-        MDCN/2024/12345
-        SPECIALTY: Cardiology
-        STATUS: ACTIVE
-        REGISTRAR MDCN
-        """
+        return {
+            "text": """
+            REGISTRANT NAME: John Doe
+            MDCN/2024/12345
+            SPECIALTY: Cardiology
+            STATUS: ACTIVE
+            REGISTRAR MDCN
+            """,
+            "ocr_mode": "fallback"
+        }
 
 
 #  4. Field Extraction
@@ -233,8 +228,13 @@ def run_nlp_pipeline(image_path: str, registry: list) -> dict:
     print(f"\n[NLP] Processing: {image_path}")
 
     preprocessed = preprocess_image(image_path)
-    ocr_text = run_ocr(preprocessed)
+    
+    ocr_output = run_ocr(preprocessed)
+    ocr_text = ocr_output["text"]
+    ocr_mode = ocr_output["ocr_mode"]
+    
     extracted = extract_fields(ocr_text)
+
     registry_result = cross_reference(extracted, registry)
 
     # OCR field completeness score (how many fields were found)
@@ -246,6 +246,7 @@ def run_nlp_pipeline(image_path: str, registry: list) -> dict:
         "extracted_fields": extracted,
         "registry_match": registry_result,
         "ocr_completeness": round(completeness, 4),
+        "ocr_mode": ocr_mode,
         "raw_ocr_snippet": ocr_text[:300],  # first 300 chars for debugging
     }
 

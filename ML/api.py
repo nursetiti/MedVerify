@@ -1,16 +1,3 @@
-"""
-MedVerify — API Layer (Lightweight Demo Mode)
-FastAPI endpoint that accepts a credential image and returns a trust score.
-CV model replaced with lightweight scoring to fit Render free tier memory limits.
- 
-Requirements:
-    pip install fastapi uvicorn python-multipart opencv-python-headless
-        pytesseract spacy rapidfuzz Pillow numpy faker
- 
-Run:
-    uvicorn api:app --reload --port 8000
-"""
- 
 import json
 import tempfile
 import os
@@ -40,14 +27,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
  
-# ── Load registry once at startup ─────────────────────────────────────────────
+#Load registry once at startup
 print("[API] Loading registry...")
 REGISTRY = load_registry()
 print(f"[API] Registry loaded — {len(REGISTRY)} records")
 print("[API] Running in lightweight demo mode (CV model bypassed for memory efficiency)")
  
  
-# ── Lightweight CV Simulation ─────────────────────────────────────────────────
+#Lightweight CV Simulation 
 def simulate_cv_result(image_path: str) -> dict:
     """
     Lightweight CV scoring — biased by filename for demo purposes.
@@ -86,6 +73,9 @@ def compute_trust_score(cv_result: dict, nlp_result: dict) -> dict:
     registry = nlp_result.get("registry_match", {})
     nlp_score = registry.get("overall_match_score", 0.0)
     completeness = nlp_result.get("ocr_completeness", 0.0)
+    ocr_mode = nlp_result.get("ocr_mode", "real")
+
+    ocr_penalty = 1.0 if ocr_mode == "real" else 0.65
  
     reg_status = registry.get("registry_status", None)
     if reg_status == "active":
@@ -98,6 +88,15 @@ def compute_trust_score(cv_result: dict, nlp_result: dict) -> dict:
         status_score = 0.3
  
     raw = (cv_score * 0.40) + (nlp_score * 0.35) + (completeness * 0.15) + (status_score * 0.10)
+    trust_score = round(raw * 100, 1)
+    
+    raw = (
+    (cv_score * 0.40) +
+    (nlp_score * 0.35) +
+    (completeness * 0.15) +
+    (status_score * 0.10)
+) * ocr_penalty
+
     trust_score = round(raw * 100, 1)
  
     if trust_score >= 70:
@@ -128,6 +127,7 @@ def compute_trust_score(cv_result: dict, nlp_result: dict) -> dict:
         "trust_score": trust_score,
         "decision": decision,
         "decision_label": decision_label,
+        "ocr_mode": ocr_mode,
         "flags": flags,
         "score_breakdown": {
             "cv_authenticity": round(cv_score * 40, 1),
