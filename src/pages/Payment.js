@@ -7,7 +7,7 @@ import './Payment.css';
 const SERVICE_FEE = 50000;
 const PLATFORM_FEE = 2000;
 const TOTAL_PAYOUT = SERVICE_FEE + PLATFORM_FEE;
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001/api/v1';
 
 const formatNaira = (amount) =>
   new Intl.NumberFormat('en-NG', {
@@ -173,7 +173,7 @@ export default function Payment() {
     } catch (err) {
       const detail = err.response
         ? err.response.data?.detail || err.response.data?.message || err.message
-        : `Cannot reach ${API_BASE_URL}. Start the backend payment proxy on port 8000.`;
+        : `Cannot reach ${API_BASE_URL}. Start the backend payment proxy on port 5001.`;
       setPaymentError(`Unable to start Squad checkout: ${detail}`);
     } finally {
       setLoadingPayment(false);
