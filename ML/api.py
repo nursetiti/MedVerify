@@ -15,6 +15,7 @@ import json
 import tempfile
 import os
 import random
+import traceback
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -219,7 +220,7 @@ async def verify_credential(file: UploadFile = File(...)):
         # Trust score — fully weighted
         trust_report = compute_trust_score(cv_result, nlp_result)
  
-        # Fraud alert
+        #Fraud alert
         alert_sent = False
         alert_message = None
         if trust_report["trust_score"] < ALERT_THRESHOLD:
@@ -234,6 +235,8 @@ async def verify_credential(file: UploadFile = File(...)):
         }
  
     except Exception as e:
+        print("Error occurred")
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Verification error: {str(e)}")
  
     finally:

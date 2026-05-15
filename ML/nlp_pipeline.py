@@ -222,7 +222,7 @@ def run_nlp_pipeline(image_path: str, registry: list) -> dict:
     }
 
 
-# ── 7. Batch Test on Sample Images ───────────────────────────────────────────
+
 if __name__ == "__main__":
     import glob
 
