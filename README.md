@@ -1,70 +1,197 @@
-# Getting Started with Create React App
+# MedVerify 🏥
+> AI-Powered Healthcare Credential Verification & Payment Gating
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Squad Hackathon 3.0 — Challenge 01: Proof of Life | Healthcare Domain | Team Dibs**
 
-## Available Scripts
+---
 
-In the project directory, you can run:
+## The Problem
 
-### `npm start`
+Fake doctors are getting paid. Telemedicine platforms in Nigeria are onboarding unverified practitioners, and no system currently gates payment on credential verification. The MDCN has repeatedly flagged this — but verification remains manual, slow, and bypassable.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**MedVerify fixes that.**
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## One Line Pitch
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+> *"Before a telemedicine platform pays a doctor, MedVerify verifies they're real."*
 
-### `npm run build`
+---
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Live Demo
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+| | |
+|---|---|
+| **Live API** | https://medverify-api.onrender.com |
+| **API Docs** | https://medverify-api.onrender.com/docs |
+| **Health Check** | https://medverify-api.onrender.com/health |
+| **Fraud Alerts Log** | https://medverify-api.onrender.com/fraud-alerts |
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+> ⚠️ The API runs on Render's free tier and sleeps after inactivity. Hit the health check URL first to wake it up before testing.
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## How It Works
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```
+Platform submits practitioner credential (MDCN cert + ID)
+                    ↓
+     CV model scans for document tampering
+                    ↓
+  NLP extracts fields + cross-references MDCN registry
+                    ↓
+      Trust Score generated (0–100) with flags
+                    ↓
+Score ≥ 70  →  Squad payment API fires       ✅ CLEAR
+Score 45–69 →  Payment held, admin reviews   ⚠️ REVIEW
+Score < 45  →  Payment blocked, case flagged 🚫 BLOCK
+Score < 30  →  Blocked + MDCN alerted        🚨 ALERT
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## Repository Structure
 
-## Learn More
+```
+MedVerify/
+├── README.md                  ← You are here
+│
+├── ML/                        ← ML Engineer (Adekunle Balqees Kofoworola)
+│   ├── api.py                 # FastAPI app — main verification endpoint
+│   ├── cv_pipeline.py         # Computer vision — EfficientNet tampering detection
+│   ├── nlp_pipeline.py        # NLP extraction + MDCN registry cross-reference
+│   ├── generate_dataset.py    # Synthetic credential image generator
+│   ├── generate_registry.py   # Mock MDCN registry generator
+│   ├── mock_registry.json     # Synthetic MDCN practitioner registry (200 records)
+│   └── requirements.txt       # Python dependencies
+│
+├── frontend/                  ← Frontend Developers (Nosirat Alade + Oluwatimilehin Okusanya)
+│   └── ...                    # Credential upload form, trust score dashboard, admin panel
+│
+└── backend/                   ← Backend Developer (Ajiboye Peter)
+    └── ...                    # Squad API integration, REST API, database, webhooks
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+---
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## API Reference
 
-### Code Splitting
+### `POST /verify`
+Accepts a credential image, returns a full trust score report.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+**Request:**
+```bash
+curl -X POST https://medverify-api.onrender.com/verify \
+  -F "file=@credential.png"
+```
 
-### Analyzing the Bundle Size
+**Response:**
+```json
+{
+  "trust_score": 74.2,
+  "decision": "CLEAR",
+  "decision_label": "Payment Cleared",
+  "flags": [],
+  "score_breakdown": {
+    "cv_authenticity": 31.5,
+    "registry_match": 27.2,
+    "field_completeness": 10.5,
+    "registry_status": 10.0
+  },
+  "extracted_fields": {
+    "name": "Dr. Aminu Bello",
+    "reg_number": "MDCN/2021/12345",
+    "specialty": "General Practice",
+    "status": "active"
+  },
+  "alert_sent": false,
+  "alert_message": null
+}
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### `GET /fraud-alerts`
+Returns all triggered fraud alerts (score < 30).
 
-### Making a Progressive Web App
+### `GET /health`
+Returns API status and registry record count.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+---
 
-### Advanced Configuration
+## Squad API Integration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+MedVerify uses Squad APIs as the enforcement layer — not a demo bolt-on:
 
-### Deployment
+| Squad API | How We Use It |
+|---|---|
+| **Payment Initiation** | Called only when Trust Score ≥ 70 (CLEAR) |
+| **Dynamic Virtual Accounts** | Created per verified practitioner at onboarding |
+| **Transfer / Payout API** | Releases fees after each verified consultation |
+| **Webhooks (HMAC SHA512)** | Blocks payments from unverified practitioners |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+> Remove Squad and the product stops working. It is architecturally central.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## The Four Pillars
+
+| Pillar | How MedVerify Addresses It |
+|---|---|
+| **AI Automation** | CV model + NLP pipeline automate verification end-to-end — no human in the AI loop |
+| **Use of Data** | Trust Score combines CV signals, registry match, field completeness, and license status |
+| **Squad APIs** | Payment initiation, virtual accounts, payouts, and webhooks all gated by verification |
+| **Financial Innovation** | Adds a trust layer to healthcare payments before any money moves |
+
+---
+
+## ML Setup (Local)
+
+### Prerequisites
+- Python 3.9+
+- Tesseract OCR ([Windows](https://github.com/UB-Mannheim/tesseract/wiki) | Linux: `sudo apt install tesseract-ocr` | Mac: `brew install tesseract`)
+
+### Installation
+```bash
+cd ML
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+```
+
+### Run Order
+```bash
+# 1. Generate mock MDCN registry
+python generate_registry.py
+
+# 2. Generate synthetic credential dataset
+python generate_dataset.py
+
+# 3. Train the CV model (takes 5–10 mins)
+python cv_pipeline.py
+
+# 4. Start the API server
+uvicorn api:app --reload --port 8000
+```
+
+---
+
+## The Team
+
+| Name | Role | Responsibilities |
+|---|---|---|
+| **Adekunle Balqees Kofoworola** | ML Engineer | CV pipeline · NLP extractor · Trust scoring · Fraud alert system · FastAPI |
+| **Ajiboye Peter** | Backend Developer | Squad API integration · REST API · Database · Webhook logic |
+| **Nosirat Alade** | Frontend Developer | Credential upload form · Trust score dashboard · UI/UX |
+| **Oluwatimilehin Okusanya** | Frontend Developer | Admin fraud review panel · Fraud alert UI · ML API integration |
+
+---
+
+## Research & Validation
+
+- **MDCN** — Repeatedly issued public warnings about unregistered practitioners on Nigerian digital health platforms
+- **Nigeria Health Watch (2023)** — Documented fake doctors operating telemedicine services, patients receiving dangerous advice
+- **WHO Digital Health Report** — Credential fraud is a top-3 barrier to digital health trust across Sub-Saharan Africa
+- **Market Research** — No Nigerian telemedicine platform currently gates Squad or any payment API on real-time credential verification
+
+---
+
+*Built for Squad Hackathon 3.0 — Smart Systems: The Intelligent Economy*
