@@ -33,10 +33,11 @@ exports.getFlaggedCases = async (req, res) => {
 
         // 2. Use findAndCountAll for pagination metadata
         const { count, rows } = await Verification.findAndCountAll({
-            where: { status: 'UNDER_REVIEW' },
+            where: { status: ['UNDER_REVIEW', 'BLOCKED'] },
             include: [{
-                model: User, // Ensure your association is set up in models/index.js
-                attributes: ['name', 'licenseNumber', 'specialty'],
+                model: Practitioner, // Ensure your association is set up in models/index.js
+                attributes: ['fullName', 'licenseNumber', 'specialty'],
+                as: 'practitioner',
                 where: search ? {
                     name: { [Op.iLike]: `%${search}%` }
                 } : {}

@@ -2,16 +2,16 @@
 const User = require('./user');
 const Practitioner = require('./practitioners');
 const Verification = require('./verifications');
-const Payouts = require('./Payouts');        // ← Add this
+const Payouts = require('./payouts');        // ← Add this
 
 // Associations
-User.hasOne(Practitioner, { 
-    foreignKey: 'userId', 
-    as: 'profile', 
-    onDelete: 'CASCADE' 
-});
+// User.hasOne(Practitioner, { 
+//     foreignKey: 'userId', 
+//     as: 'profile', 
+//     onDelete: 'CASCADE' 
+// });
 
-Practitioner.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+// Practitioner.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 Practitioner.hasMany(Verification, { 
     foreignKey: 'practitioner_id',   // Make sure this matches your model

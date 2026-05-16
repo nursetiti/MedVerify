@@ -21,27 +21,42 @@ router.post('/submit', protect, isAdmin, upload.fields([
     { name: 'governmentId', maxCount: 1 }
     ]), verificationController.submitCredentials);
 
-router.get('/board', isAdmin, adminController.getAdminStats);
+router.get('/board', protect,  isAdmin, adminController.getAdminStats);
 
 // routes/adminRoutes.js
+// router.post(
+//     '/process-payment', 
+//     protect, 
+//     isAdmin, 
+//     upload.single('mdcnCertificate'), // Set to single and name it 'mdcnCertificate'
+//     verificationController.processVerificationAndPayment
+// );
+
 router.post(
-    '/process-payment', 
+    '/process-verification-ML', 
     protect, 
     isAdmin, 
-    upload.single('mdcnCertificate'), // Set to single and name it 'mdcnCertificate'
-    verificationController.processVerificationAndPayment
+    verificationController.processVerificationML // Ensure this matches your exported controller name exactly
 );
 
-router.post('/process-verification', protect, isAdmin, upload.single('mdcnCertificate'), verificationController.processVerification);
+router.post(
+    '/process-verification', 
+    protect, 
+    isAdmin, 
+    verificationController.processVerificationBypass // Ensure this matches your exported controller name exactly
+);
 
-router.post('/process-payout', protect, isAdmin, verificationController.initiateManualPayout);
+// router.post('/payout', protect, isAdmin, payoutController.executeStep3Payout);
+// router.post('/process-payout', protect, isAdmin, verificationController.initiateManualPayout);
 
-router.get('/flagged-cases', isAdmin, adminController.getFlaggedCases);
+router.get('/flagged-cases',protect, isAdmin, adminController.getFlaggedCases);
 
-router.post('/execute-payout', protect, isAdmin, payoutController.executeManualPayout);
+// router.post('/execute-payout', protect, isAdmin, payoutController.executeManualPayout);
 
 router.post('/virtual-account', protect, isAdmin, PractitionerController.initiateDynamicVirtualAccount);
 
-router.post('/initiate-verification', protect, isAdmin, PractitionerController.initiateVerificationPayment);
+router.post('/initiate-virtual-account', protect, isAdmin, PractitionerController.initiateVerificationPayment);
+
+router.post('/simulate-payment', protect, isAdmin, PractitionerController.triggerPaymentSimulation)
 
 module.exports = router;

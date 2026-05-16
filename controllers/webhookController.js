@@ -11,6 +11,8 @@ exports.handleSquadWebhook = async (req, res) => {
     const hash = crypto.createHmac('sha512', secret)
                     .update(req.rawBody || JSON.stringify(req.body))
                     .digest('hex');
+    console.log("SQUAD_HEADER:", squadSignature);
+    console.log("MY_COMPUTED_HASH:", hash.toUpperCase());
 
     if (!squadSignature || hash.toUpperCase() !== squadSignature.toUpperCase()) {
         return res.status(401).json({ message: 'Invalid Signature' });
@@ -35,7 +37,7 @@ exports.handleSquadWebhook = async (req, res) => {
                 break;
 
             default:
-                console.log(`ℹ️ Unhandled event: ${Event}`);
+                console.log(` Unhandled event: ${Event}`);
         }
         await t.commit();
         return res.status(200).send('OK');

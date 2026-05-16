@@ -15,6 +15,12 @@ const Practitioner = sequelize.define('practitioner', {
             notEmpty: true
         }
     },
+    email: {
+        type: DataTypes.STRING,
+        unique: true,
+        allowNull: false,
+        validate: { isEmail: true }
+    },
     licenseNumber: {
         type: DataTypes.STRING,
         //unique: true,
@@ -34,14 +40,35 @@ const Practitioner = sequelize.define('practitioner', {
     bankCode: {
         type: DataTypes.STRING,
         allowNull: true,
-        comment: 'Required for Squad Payout API (e.g., 058 for GTBank)'
+        comment: 'Required for Squad Payout API (e.g., 058 for GTBank)',
+        defaultValue: null
     },
     accountNumber: {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
             len: [10, 10]
-        }
+        },
+        defaultValue: null,
+    },
+    accountName: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null
+    },
+    amount: {
+        type: DataTypes.DECIMAL(12, 2),
+        allowNull: false,
+    },
+    documentPath: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        comment: 'Local disk path or cloud storage URL for the MDCN Certificate PDF'
+    },
+    governmentIdPath: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        comment: 'Local disk path or cloud storage URL for the Government ID document'
     },
     // beneficiaryAccount: {
     //     type: DataTypes.STRING,
@@ -65,15 +92,15 @@ const Practitioner = sequelize.define('practitioner', {
         defaultValue: false,
         comment: 'Global verification flag based on latest trust score'
     },
-    userId: {
-        type: DataTypes.UUID,
-        allowNull: false,
-        unique: true,
-        references: {
-            model: 'users',
-            key: 'id'
-        }
-    }
+    // userId: {
+    //     type: DataTypes.UUID,
+    //     allowNull: true,
+    //     unique: true,
+    //     references: {
+    //         model: 'users',
+    //         key: 'id'
+    //     }
+    // }
 }, {
     timestamps: true,
     tableName: 'practitioners',

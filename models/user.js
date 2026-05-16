@@ -20,54 +20,54 @@ const User = sequelize.define('user', {
         allowNull: false,
         validate: { isEmail: true }
     },
-    phone: {
-        type: DataTypes.STRING,
-        allowNull: false,
-    },
-    DOB: {
-        type: DataTypes.DATEONLY,
-        allowNull: false,
-    },
-    address: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
+    // phone: {
+    //     type: DataTypes.STRING,
+    //     allowNull: false,
+    // },
+    // DOB: {
+    //     type: DataTypes.DATEONLY,
+    //     allowNull: false,
+    // },
+    // address: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    // },
     password: {
         type: DataTypes.STRING,
         allowNull: false,
         comment: 'Hashed using bcrypt'
     },
-    gender: {
-        type: DataTypes.STRING,
-        allowNull: true,
-        validate: {
-            min: 1,
-            max: 2
-        } 
-    },
+    // gender: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    //     validate: {
+    //         min: 1,
+    //         max: 2
+    //     } 
+    // },
     role: {
         type: DataTypes.ENUM('admin', 'practitioner'),
         allowNull: false,
         defaultValue: 'practitioner' // Changed to practitioner as the standard user
     },
     // Professional Credentials (Added)
-    licenseNumber: {
-        type: DataTypes.STRING,
-        unique: true,
-        allowNull: true, // Null until submission
-    },
-    specialty: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
-    yearsOfPractice: {
-        type: DataTypes.INTEGER,
-        allowNull: true,
-    },
-    hospitalAffiliation: {
-        type: DataTypes.STRING,
-        allowNull: true,
-    },
+    // licenseNumber: {
+    //     type: DataTypes.STRING,
+    //     unique: true,
+    //     allowNull: true, // Null until submission
+    // },
+    // specialty: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    // },
+    // yearsOfPractice: {
+    //     type: DataTypes.INTEGER,
+    //     allowNull: true,
+    // },
+    // hospitalAffiliation: {
+    //     type: DataTypes.STRING,
+    //     allowNull: true,
+    // },
     // Security & State (Added)
     isVerified: {
         type: DataTypes.BOOLEAN,

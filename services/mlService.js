@@ -1,30 +1,15 @@
 const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
-const path = require('path');
+require('dotenv').config;
 const https = require('https');
+const { Practitioner } = require('../models'); // Import model for deactivation
 
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL;
 
-const analyzeCredentials = async (mdcnPath, idPath, name, regNo) => {
-    try {
-        const response = await axios.post(`${process.env.ML_SERVICE_URL}/verify`, {
-            mdcn_path: mdcnPath,
-            id_path: idPath,
-            full_name: name,
-            registration_number: regNo
-        });
-        return response.data; // Should return the score (e.g., 60.8) and flags
-    } catch (error) {
-        console.error("ML Service Bridge Error:", error.message);
-        throw new Error("Failed to communicate with AI service.");
-    }
-};
 /**
  * ML Bridge: Connects Node.js Backend to FastAPI ML Layer
- * @param {Object} files - The req.files object from Multer
- * @param {Object} userData - Contains fullName and mdcnNumber
- */
+ */ // Ensure path is correct
+
 const analyzeMedicalCredential = async (files, userData) => {
     try {
         const form = new FormData();
@@ -92,4 +77,4 @@ const analyzeMedicalCredential = async (files, userData) => {
     }
 };
 
-module.exports = { analyzeMedicalCredential, analyzeCredentials };
+module.exports = { analyzeMedicalCredential };

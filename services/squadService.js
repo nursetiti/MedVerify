@@ -32,7 +32,7 @@ const initiatePayout = async (paymentData) => {
 
         const payload = {
             amount: amountInKobo,
-            email: paymentData.email || "practitioner@test.com",
+            email: paymentData.email,
             currency: "NGN",
             initiate_type: "inline",
             transaction_ref: txnRef,
@@ -74,6 +74,7 @@ const initiatePayout = async (paymentData) => {
 /**
  * 2. LOOKUP: Verify account name before sending money
  */
+
 const lookupAccount = async (bankCode, accountNumber) => {
     try {
         const response = await axios.post(`${SQUAD_PAYOUT_URL}/payout/account/lookup`, {
@@ -84,8 +85,16 @@ const lookupAccount = async (bankCode, accountNumber) => {
         });
         return { success: true, data: response.data.data };
     } catch (error) {
-        console.error('Account Lookup Error:', error.response?.data || error.message);
-        return { success: false, error: error.response?.data?.message || "Account lookup failed" };
+        // Log the full structure in your terminal for deeper debugging
+        console.error('❌ Squad Account Lookup Raw Error:', error.response?.data || error.message);
+        
+        // 🌟 THE FIX: Extract the exact nested error message returned by Squad's API gateway
+        const exactSquadErrorMessage = error.response?.data?.message || error.message || "Account lookup failed";
+        
+        return { 
+            success: false, 
+            error: exactSquadErrorMessage 
+        };
     }
 };
 
@@ -179,7 +188,7 @@ const initiateDynamicAccount = async (practitioner, amount) => {
 
         const payload = {
             amount: koboAmount, 
-            email: practitioner.user?.email || practitioner.email,
+            email: practitioner.email,
             duration: 3600, // 1 hour in seconds per your rule image
             transaction_ref: `MV-DYN-${Date.now()}-${String(practitioner.id).slice(0, 4)}`,
         };
@@ -211,9 +220,11 @@ const initiateDynamicAccount = async (practitioner, amount) => {
  */
 const simulateSquadPayment = async (accountNumber, koboAmount) => {
     try {
+        const cleanAmountString = String(Math.floor(Number(koboAmount)));
+
         const payload = {
-            virtual_account_number: String(accountNumber), // Docs say Integer, but string usually works best with Axios
-            amount: Math.floor(Number(koboAmount))
+            virtual_account_number: String(accountNumber), 
+            amount: cleanAmountString // 👈 Enforced as a strict string literal (e.g., "520000")
         };
 
         const response = await axios.post(

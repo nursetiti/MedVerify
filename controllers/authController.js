@@ -1,35 +1,67 @@
-const {User} = require('../models');
+const {User, Practitioner, Verification} = require('../models');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const sequelize = require('../config/database');
 const {userSchema, loginSchema} = require('../validators/userValidate')
 const {hashPassword, comparePassword} = require('../utils/bcrypt');
 const { generateToken } = require('../services/authService');
 
-exports.signUp = async (req, res) => {
-    try {
-        const {error, value} = userSchema.validate(req.body);
-        if (error) return res.status(400).json({error : error.message});
-        const {fullName, email, phone, password, DOB, role } = value;
+// 1. Define the Compensation Matrix (Price List)
+const SPECIALTY_RATES = {
+    'General Practitioner': 5000,
+    'Surgeon': 15000,
+    'Pediatrician': 10000,
+    'Cardiologist': 12000,
+    'Nurse': 4000,
+    'Default': 5000
+};
 
-        const existingUser = await User.findOne({ where: {email} });
-        if (existingUser) return res.status(400).json({ error: 'Email already exist'});
+// 2. Helper function to calculate merit-based pay
+const calculateBaseAmount = (specialty, years) => {
+    const base = SPECIALTY_RATES[specialty] || SPECIALTY_RATES['Default'];
+    // 5% increase per year, capped at 100% bonus (max 20 years)
+    const multiplier = 1 + Math.min((years * 0.05), 1.0); 
+    return Math.floor(base * multiplier);
+};
+
+exports.signUp = async (req, res) => {
+    const t = await sequelize.transaction();
+
+    try {
+        const { error, value } = userSchema.validate(req.body);
+        if (error) return res.status(400).json({ error: error.message });
+        
+        const { fullName, email, password, role } = value;
+
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) return res.status(400).json({ error: 'Email already exists' });
         
         const hashedPassword = await hashPassword(password);
         
-        const user = await User.create({ ...req.body, password: hashedPassword });
-        
-        // Don't send the password back in the response
+        // 1. Create the User record
+        const user = await User.create(
+            { 
+                ...value, 
+                password: hashedPassword, 
+                isVerified: true // Now starts as false until Step 2/3
+            }, 
+            { transaction: t }
+        );
+
+        await t.commit();
+
         const responseData = user.toJSON();
         delete responseData.password;
 
         res.status(201).json({ 
-            message: 'User signed up successfully', 
+            message: 'Account created. Please proceed to verification (Step 2).', 
             data: responseData 
         });
+
     } catch (error) {
-        // Handle unique constraint errors (e.g., email already exists)
+        await t.rollback();
         if (error.name === 'SequelizeUniqueConstraintError') {
-            return res.status(400).json({ error: 'Email or License Number already registered' });
+            return res.status(400).json({ error: 'License Number or Email already registered' });
         }
         res.status(500).json({ error: error.message });
     }
