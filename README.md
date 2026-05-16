@@ -7,47 +7,71 @@
 
 ## The Problem
 
-Fake doctors are getting paid. Telemedicine platforms in Nigeria are onboarding unverified practitioners, and no system currently gates payment on credential verification. The MDCN has repeatedly flagged this — but verification remains manual, slow, and bypassable.
+Fake doctors are getting paid. Telemedicine platforms in Nigeria are onboarding unverified practitioners, and no system currently gates payment on real-time credential verification. The MDCN has repeatedly flagged this — but verification remains manual, slow, and bypassable.
 
 **MedVerify fixes that.**
 
 ---
 
-## One Line Pitch
+
 
 > *"Before a telemedicine platform pays a doctor, MedVerify verifies they're real."*
 
 ---
 
-## Live Demo
+## Live URLs
 
-| | |
+| Service | URL |
 |---|---|
-| **Live API** | https://medverify-api.onrender.com |
-| **API Docs** | https://medverify-api.onrender.com/docs |
-| **Health Check** | https://medverify-api.onrender.com/health |
+| **Backend (Node)** | https://medverify-j9f5.onrender.com |
+| **ML API (FastAPI)** | https://medverify-api.onrender.com |
+| **ML API Docs** | https://medverify-api.onrender.com/docs |
 | **Fraud Alerts Log** | https://medverify-api.onrender.com/fraud-alerts |
 
-> ⚠️ The API runs on Render's free tier and sleeps after inactivity. Hit the health check URL first to wake it up before testing.
+> ⚠️ All services run on Render's free tier and sleep after inactivity. If a request takes ~50 seconds on first load, it's waking up — try again immediately after.
 
 ---
 
-## How It Works
+## How the Full System Works
+
+MedVerify is a three-part system. Here's how all the pieces connect:
 
 ```
-Platform submits practitioner credential (MDCN cert + ID)
-                    ↓
-     CV model scans for document tampering
-                    ↓
-  NLP extracts fields + cross-references MDCN registry
-                    ↓
-      Trust Score generated (0–100) with flags
-                    ↓
-Score ≥ 70  →  Squad payment API fires       ✅ CLEAR
-Score 45–69 →  Payment held, admin reviews   ⚠️ REVIEW
-Score < 45  →  Payment blocked, case flagged 🚫 BLOCK
-Score < 30  →  Blocked + MDCN alerted        🚨 ALERT
+┌─────────────────────────────────────────────────────────────┐
+│                     FRONTEND (React)                        │
+│  Credential upload form → Trust score dashboard → Admin     │
+└──────────────────────────┬──────────────────────────────────┘
+                           │ HTTP requests
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                   BACKEND (Node.js)                         │
+│  Receives upload → calls ML API → reads trust score         │
+│  If CLEAR → calls Squad API to initiate payment             │
+│  If BLOCK → stops payment, logs case                        │
+└──────────┬───────────────────────────┬──────────────────────┘
+           │ POST /verify              │ Squad API calls
+           ▼                           ▼
+┌─────────────────────┐   ┌────────────────────────────────────┐
+│   ML API (FastAPI)  │   │         SQUAD APIs                 │
+│  CV model           │   │  Payment Initiation                │
+│  NLP extraction     │   │  Dynamic Virtual Accounts          │
+│  Trust scoring      │   │  Transfer / Payout API             │
+│  Fraud alerts       │   │  Webhooks (HMAC SHA512)            │
+└─────────────────────┘   └────────────────────────────────────┘
 ```
+
+### The Payment Flow in Plain English
+
+1. A practitioner applies to join a telemedicine platform and submits their MDCN credentials
+2. The platform's admin uploads the credential through the MedVerify dashboard
+3. The frontend sends the image to the backend
+4. The backend forwards it to the ML API (`POST /verify`)
+5. The ML API runs computer vision + NLP + trust scoring and returns a decision
+6. The backend reads the `decision` field:
+   - **CLEAR (≥70)** → Backend calls Squad's Payment API to create/fund the practitioner's account
+   - **REVIEW (45–69)** → Payment is held, admin is notified to manually review
+   - **BLOCK (<45)** → Payment is stopped entirely, case is flagged in the admin panel
+   - **ALERT (<30)** → Payment is blocked AND MDCN authorities are automatically notified
 
 ---
 
@@ -58,29 +82,104 @@ MedVerify/
 ├── README.md                  ← You are here
 │
 ├── ML/                        ← ML Engineer (Adekunle Balqees Kofoworola)
-│   ├── api.py                 # FastAPI app — main verification endpoint
+│   ├── api.py                 # FastAPI app — main /verify endpoint
 │   ├── cv_pipeline.py         # Computer vision — EfficientNet tampering detection
 │   ├── nlp_pipeline.py        # NLP extraction + MDCN registry cross-reference
-│   ├── generate_dataset.py    # Synthetic credential image generator
-│   ├── generate_registry.py   # Mock MDCN registry generator
-│   ├── mock_registry.json     # Synthetic MDCN practitioner registry (200 records)
+│   ├── generate_dataset.py    # Synthetic MDCN credential image generator
+│   ├── generate_registry.py   # Mock MDCN registry generator (200 records)
+│   ├── mock_registry.json     # Synthetic MDCN practitioner registry
 │   └── requirements.txt       # Python dependencies
 │
-├── frontend/                  ← Frontend Developers (Nosirat Alade + Oluwatimilehin Okusanya)
-│   └── ...                    # Credential upload form, trust score dashboard, admin panel
+├── frontend/                  ← Frontend Devs (Nosirat Alade + Oluwatimilehin Okusanya)
+│   ├── src/
+│   │   ├── components/        # React components
+│   │   ├── pages/             # Upload page, dashboard, admin panel
+│   │   └── App.js             # Main React app
+│   ├── package.json
+│   └── README.md
 │
 └── backend/                   ← Backend Developer (Ajiboye Peter)
-    └── ...                    # Squad API integration, REST API, database, webhooks
+    ├── src/
+    │   ├── routes/            # API routes
+    │   ├── controllers/       # Business logic + Squad API integration
+    │   └── index.js           # Entry point
+    ├── package.json
+    └── README.md
 ```
 
 ---
 
-## API Reference
+## Setting Up Locally
+
+### Prerequisites
+- **Python 3.9+** (for ML API)
+- **Node.js 18+** (for frontend and backend)
+- **Tesseract OCR** — [Windows installer](https://github.com/UB-Mannheim/tesseract/wiki) | Linux: `sudo apt install tesseract-ocr` | Mac: `brew install tesseract`
+
+---
+
+### 1. ML API (FastAPI)
+
+```bash
+cd ML
+pip install -r requirements.txt
+python -m spacy download en_core_web_sm
+
+# Generate the mock registry first
+python generate_registry.py
+
+# Generate synthetic credential images (optional — for testing)
+python generate_dataset.py
+
+# Start the ML API
+uvicorn api:app --reload --port 8000
+```
+
+ML API runs at: `http://localhost:8000`
+API docs at: `http://localhost:8000/docs`
+
+---
+
+### 2. Backend (Node.js)
+
+```bash
+cd backend
+npm install
+
+# Create a .env file with your Squad API keys
+# SQUAD_SECRET_KEY=your_squad_key
+# ML_API_URL=https://medverify-api.onrender.com
+# PORT=3000
+
+npm start
+```
+
+Backend runs at: `http://localhost:3000`
+
+---
+
+### 3. Frontend (React)
+
+```bash
+cd frontend
+npm install
+
+# Create a .env file
+# REACT_APP_BACKEND_URL=http://localhost:3000
+
+npm start
+```
+
+Frontend runs at: `http://localhost:3001`
+
+---
+
+## ML API Reference
 
 ### `POST /verify`
-Accepts a credential image, returns a full trust score report.
+The core endpoint. Accepts a credential image, returns a full trust score report.
 
-**Request:**
+**How to call it:**
 ```bash
 curl -X POST https://medverify-api.onrender.com/verify \
   -F "file=@credential.png"
@@ -110,8 +209,28 @@ curl -X POST https://medverify-api.onrender.com/verify \
 }
 ```
 
+**Decision values:**
+
+| Decision | Score Range | What Happens |
+|---|---|---|
+| `CLEAR` | ≥ 70 | Backend calls Squad to release payment |
+| `REVIEW` | 45–69 | Payment held, admin manually reviews |
+| `BLOCK` | < 45 | Payment blocked, case flagged |
+| `ALERT` | < 30 | Blocked + MDCN authorities notified |
+
+**Possible flags:**
+
+| Flag | Meaning |
+|---|---|
+| `document_tampering_detected` | CV model found forgery signals |
+| `registry_mismatch` | Name or reg number doesn't match MDCN registry |
+| `incomplete_fields` | OCR couldn't read all credential fields |
+| `practitioner_revoked` | Found in registry but license revoked |
+| `practitioner_inactive` | Found but license is inactive |
+| `not_found_in_registry` | Not found in MDCN registry at all |
+
 ### `GET /fraud-alerts`
-Returns all triggered fraud alerts (score < 30).
+Returns all automatically triggered fraud alerts (trust score < 30).
 
 ### `GET /health`
 Returns API status and registry record count.
@@ -120,16 +239,16 @@ Returns API status and registry record count.
 
 ## Squad API Integration
 
-MedVerify uses Squad APIs as the enforcement layer — not a demo bolt-on:
+Squad is the enforcement layer in MedVerify — not a demo bolt-on. The backend integrates Squad directly based on the ML API's decision:
 
-| Squad API | How We Use It |
+| Squad API | When It's Called |
 |---|---|
-| **Payment Initiation** | Called only when Trust Score ≥ 70 (CLEAR) |
+| **Payment Initiation** | Only when trust score ≥ 70 (CLEAR) |
 | **Dynamic Virtual Accounts** | Created per verified practitioner at onboarding |
-| **Transfer / Payout API** | Releases fees after each verified consultation |
-| **Webhooks (HMAC SHA512)** | Blocks payments from unverified practitioners |
+| **Transfer / Payout API** | Releases consultation fees after each session |
+| **Webhooks (HMAC SHA512)** | Intercepts and blocks payments from unverified practitioners |
 
-> Remove Squad and the product stops working. It is architecturally central.
+> **Key principle:** The backend never calls Squad unless MedVerify returns `decision: "CLEAR"`. Remove MedVerify and Squad has no gate. Remove Squad and the verified practitioner can never be paid. They are architecturally inseparable.
 
 ---
 
@@ -137,60 +256,32 @@ MedVerify uses Squad APIs as the enforcement layer — not a demo bolt-on:
 
 | Pillar | How MedVerify Addresses It |
 |---|---|
-| **AI Automation** | CV model + NLP pipeline automate verification end-to-end — no human in the AI loop |
-| **Use of Data** | Trust Score combines CV signals, registry match, field completeness, and license status |
-| **Squad APIs** | Payment initiation, virtual accounts, payouts, and webhooks all gated by verification |
-| **Financial Innovation** | Adds a trust layer to healthcare payments before any money moves |
-
----
-
-## ML Setup (Local)
-
-### Prerequisites
-- Python 3.9+
-- Tesseract OCR ([Windows](https://github.com/UB-Mannheim/tesseract/wiki) | Linux: `sudo apt install tesseract-ocr` | Mac: `brew install tesseract`)
-
-### Installation
-```bash
-cd ML
-pip install -r requirements.txt
-python -m spacy download en_core_web_sm
-```
-
-### Run Order
-```bash
-# 1. Generate mock MDCN registry
-python generate_registry.py
-
-# 2. Generate synthetic credential dataset
-python generate_dataset.py
-
-# 3. Train the CV model (takes 5–10 mins)
-python cv_pipeline.py
-
-# 4. Start the API server
-uvicorn api:app --reload --port 8000
-```
+| **AI Automation** | CV model (EfficientNetB0) + NLP pipeline automate verification end-to-end — no human in the AI decision loop |
+| **Use of Data** | Trust Score combines CV tampering signals, NLP registry match, field completeness, and license status into one interpretable score |
+| **Squad APIs** | Payment initiation, dynamic virtual accounts, payouts, and webhooks are all gated by our verification result |
+| **Financial Innovation** | Adds a trust layer to healthcare payments — transforming how platforms verify practitioners before any money moves |
 
 ---
 
 ## The Team
 
-| Name | Role | Responsibilities |
+| Name | Role | What They Built |
 |---|---|---|
-| **Adekunle Balqees Kofoworola** | ML Engineer | CV pipeline · NLP extractor · Trust scoring · Fraud alert system · FastAPI |
-| **Ajiboye Peter** | Backend Developer | Squad API integration · REST API · Database · Webhook logic |
-| **Nosirat Alade** | Frontend Developer | Credential upload form · Trust score dashboard · UI/UX |
-| **Oluwatimilehin Okusanya** | Frontend Developer | Admin fraud review panel · Fraud alert UI · ML API integration |
+| **Adekunle Balqees Kofoworola** | ML Engineer | CV pipeline, NLP extractor, trust scoring engine, fraud alert system, FastAPI deployment |
+| **Ajiboye Peter** | Backend Developer | Squad API integration, REST API layer, database, webhook logic, system architecture |
+| **Nosirat Alade** | Frontend Developer | Credential upload form, trust score dashboard, real-time decision display, UI/UX |
+| **Oluwatimilehin Okusanya** | Frontend Developer | Admin fraud review panel, flagged cases table, fraud alert UI, ML API integration |
 
 ---
 
 ## Research & Validation
 
-- **MDCN** — Repeatedly issued public warnings about unregistered practitioners on Nigerian digital health platforms
-- **Nigeria Health Watch (2023)** — Documented fake doctors operating telemedicine services, patients receiving dangerous advice
-- **WHO Digital Health Report** — Credential fraud is a top-3 barrier to digital health trust across Sub-Saharan Africa
-- **Market Research** — No Nigerian telemedicine platform currently gates Squad or any payment API on real-time credential verification
+| Source | Finding |
+|---|---|
+| **MDCN Public Statements** | Repeatedly warned about unregistered practitioners on Nigerian digital health platforms |
+| **Nigeria Health Watch (2023)** | Documented fake doctors operating telemedicine services with patients receiving dangerous advice |
+| **WHO Digital Health Report** | Credential fraud is a top-3 barrier to digital health trust across Sub-Saharan Africa |
+| **Our Market Research** | No Nigerian telemedicine platform currently gates Squad or any payment API on real-time credential verification |
 
 ---
 
